@@ -1,4 +1,4 @@
-package com.weicanjie.common;
+package com.jiumo.weicanjie.common;
 
 import lombok.Data;
 import java.io.Serializable;

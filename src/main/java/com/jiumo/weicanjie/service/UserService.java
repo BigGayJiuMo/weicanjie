@@ -1,9 +1,9 @@
-package com.weicanjie.service;
+package com.jiumo.weicanjie.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.weicanjie.entity.LoginRequest;
-import com.weicanjie.entity.User;
-import com.weicanjie.common.Result;
+import com.jiumo.weicanjie.entity.LoginRequest;
+import com.jiumo.weicanjie.entity.User;
+import com.jiumo.weicanjie.common.Result;
 
 public interface UserService extends IService<User> {
 
@@ -35,4 +35,11 @@ public interface UserService extends IService<User> {
      * @return 绑定结果
      */
     Result<String> bindPhone(Long userId, String phone);
+    /**
+     * 通过微信授权码绑定手机号
+     * @param userId 用户ID
+     * @param code 微信手机号授权码
+     * @return 绑定结果
+     */
+    Result<String> bindPhoneByCode(Long userId, String code);
 }

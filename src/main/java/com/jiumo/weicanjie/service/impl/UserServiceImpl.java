@@ -1,12 +1,12 @@
-package com.weicanjie.service.impl;
+package com.jiumo.weicanjie.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.weicanjie.common.Result;
-import com.weicanjie.entity.LoginRequest;
-import com.weicanjie.entity.User;
-import com.weicanjie.mapper.UserMapper;
-import com.weicanjie.service.UserService;
+import com.jiumo.weicanjie.common.Result;
+import com.jiumo.weicanjie.entity.User;
+import com.jiumo.weicanjie.entity.LoginRequest.UserInfo;
+import com.jiumo.weicanjie.mapper.UserMapper;
+import com.jiumo.weicanjie.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     @Transactional
-    public Result<User> wechatLogin(String code, LoginRequest.UserInfo requestUserInfo) {
+    public Result<User> wechatLogin(String code, UserInfo requestUserInfo) {
         try {
             log.info("微信登录，code: {}", code);
 
@@ -158,6 +158,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
     }
 
+    @Override
+    @Transactional
+    public Result<String> bindPhoneByCode(Long userId, String code) {
+        try {
+            log.info("通过授权码绑定手机号，userId: {}, code: {}", userId, code);
+
+            // 在实际项目中，这里应该调用微信API解密手机号：
+            // https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/getPhoneNumber.html
+
+            // 开发环境模拟：生成模拟手机号
+            String mockPhone = generateMockPhoneNumber(code);
+
+            log.info("模拟获取手机号: {}", mockPhone);
+
+            // 使用现有的绑定手机号逻辑
+            return bindPhone(userId, mockPhone);
+
+        } catch (Exception e) {
+            log.error("通过授权码绑定手机号异常", e);
+            return Result.error("绑定异常: " + e.getMessage());
+        }
+    }
+
     /**
      * 生成模拟的openid（开发环境使用）
      * @param code 微信code
@@ -169,5 +192,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 开发环境模拟：使用code + 随机数生成模拟openid
         return "mock_openid_" + code.hashCode() + "_" + UUID.randomUUID().toString().substring(0, 8);
+    }
+
+    /**
+     * 生成模拟手机号（开发环境使用）
+     * @param code 微信授权码
+     * @return 模拟手机号
+     */
+    private String generateMockPhoneNumber(String code) {
+        // 在实际项目中，这里应该调用微信API解密手机号
+        // 开发环境模拟：生成一个以138开头的随机手机号
+        String baseNumber = String.valueOf(Math.abs(code.hashCode()) % 100000000);
+        return "138" + String.format("%08d", Integer.parseInt(baseNumber)).substring(0, 8);
     }
 }

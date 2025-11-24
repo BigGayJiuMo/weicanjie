@@ -1,4 +1,4 @@
-package com.weicanjie.config;
+package com.jiumo.weicanjie.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

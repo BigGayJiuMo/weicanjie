@@ -1,4 +1,4 @@
-package com.weicanjie.entity;
+package com.jiumo.weicanjie.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;

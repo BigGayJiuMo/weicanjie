@@ -1,9 +1,10 @@
-package com.weicanjie.controller;
+package com.jiumo.weicanjie.controller;
 
-import com.weicanjie.common.Result;
-import com.weicanjie.entity.LoginRequest;
-import com.weicanjie.entity.User;
-import com.weicanjie.service.UserService;
+import com.jiumo.weicanjie.common.Result;
+import com.jiumo.weicanjie.entity.BindPhoneRequest;
+import com.jiumo.weicanjie.entity.LoginRequest;
+import com.jiumo.weicanjie.entity.User;
+import com.jiumo.weicanjie.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,9 +50,9 @@ public class UserController {
      * 绑定手机号
      */
     @PostMapping("/bindPhone")
-    public Result<String> bindPhone(@RequestParam Long userId,
-                                    @RequestParam String phone) {
-        return userService.bindPhone(userId, phone);
+    public Result<String> bindPhone(@RequestBody BindPhoneRequest request) {
+        System.out.println("绑定手机号请求，userId: " + request.getUserId() + ", phone: " + request.getPhone());
+        return userService.bindPhone(request.getUserId(), request.getPhone());
     }
 
     /**

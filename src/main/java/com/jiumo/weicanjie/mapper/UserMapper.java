@@ -1,7 +1,7 @@
-package com.weicanjie.mapper;
+package com.jiumo.weicanjie.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.weicanjie.entity.User;
+import com.jiumo.weicanjie.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

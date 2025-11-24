@@ -1,4 +1,4 @@
-package com.weicanjie.entity;
+package com.jiumo.weicanjie.entity;
 
 import lombok.Data;
 
