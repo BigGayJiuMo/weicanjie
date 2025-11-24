@@ -1,0 +1,11 @@
+package com.weicanjie.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.weicanjie.entity.User;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface UserMapper extends BaseMapper<User> {
+    // 可以在这里添加自定义的SQL方法
+    // 例如：List<User> selectUsersByCondition(Map<String, Object> condition);
+}
