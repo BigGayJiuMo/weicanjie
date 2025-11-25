@@ -121,6 +121,53 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     @Transactional
+    public Result<User> updateUserProfile(Long userId, String nickname, String avatarUrl) {
+        try {
+            if (userId == null) {
+                return Result.error("用户ID不能为空");
+            }
+
+            User existingUser = getById(userId);
+            if (existingUser == null) {
+                return Result.error("用户不存在");
+            }
+
+            // 更新昵称和头像
+            boolean updated = false;
+            if (nickname != null && !nickname.trim().isEmpty()) {
+                existingUser.setNickname(nickname.trim());
+                updated = true;
+            }
+            if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+                existingUser.setAvatarUrl(avatarUrl.trim());
+                updated = true;
+            }
+
+            if (updated) {
+                existingUser.setUpdatedTime(LocalDateTime.now());
+                boolean updateResult = updateById(existingUser);
+
+                if (updateResult) {
+                    // 重新查询获取最新数据
+                    User updatedUser = getById(userId);
+                    log.info("用户资料更新成功，userId: {}, nickname: {}, avatarUrl: {}",
+                            userId, nickname, avatarUrl);
+                    return Result.success(updatedUser);
+                } else {
+                    log.error("用户资料更新失败，userId: {}", userId);
+                    return Result.error("更新失败");
+                }
+            } else {
+                return Result.error("没有要更新的数据");
+            }
+        } catch (Exception e) {
+            log.error("更新用户资料异常", e);
+            return Result.error("更新异常: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
     public Result<String> bindPhone(Long userId, String phone) {
         try {
             // 简单的手机号格式验证

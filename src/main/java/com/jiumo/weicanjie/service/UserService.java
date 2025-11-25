@@ -29,12 +29,22 @@ public interface UserService extends IService<User> {
     Result<User> updateUserInfo(User user);
 
     /**
+     * 更新用户资料（头像和昵称）
+     * @param userId 用户ID
+     * @param nickname 昵称
+     * @param avatarUrl 头像URL
+     * @return 更新结果
+     */
+    Result<User> updateUserProfile(Long userId, String nickname, String avatarUrl);
+
+    /**
      * 绑定手机号
      * @param userId 用户ID
      * @param phone 手机号
      * @return 绑定结果
      */
     Result<String> bindPhone(Long userId, String phone);
+
     /**
      * 通过微信授权码绑定手机号
      * @param userId 用户ID
