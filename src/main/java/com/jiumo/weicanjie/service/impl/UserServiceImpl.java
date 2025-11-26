@@ -24,9 +24,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     @Transactional
-    public Result<User> wechatLogin(String code, UserInfo requestUserInfo) {
+    public Result<User> wechatLogin(String code, UserInfo requestUserInfo, String phone) {
         try {
-            log.info("微信登录，code: {}", code);
+            log.info("微信登录，code: {}, phone: {}", code, phone);
 
             // 生成模拟的openid（开发环境使用）
             String openid = generateMockOpenid(code);
@@ -40,9 +40,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 if (requestUserInfo != null) {
                     existingUser.setNickname(requestUserInfo.getNickname());
                     existingUser.setAvatarUrl(requestUserInfo.getAvatarUrl());
-                    existingUser.setUpdatedTime(LocalDateTime.now());
-                    updateById(existingUser);
                 }
+                // 如果有手机号，更新手机号
+                if (phone != null && !phone.trim().isEmpty()) {
+                    // 检查手机号是否已被其他用户绑定
+                    User userWithSamePhone = getUserByPhone(phone);
+                    if (userWithSamePhone != null && !userWithSamePhone.getId().equals(existingUser.getId())) {
+                        return Result.error("该手机号已被其他用户绑定");
+                    }
+                    existingUser.setPhone(phone);
+                }
+                existingUser.setUpdatedTime(LocalDateTime.now());
+                updateById(existingUser);
                 return Result.success(existingUser);
             } else {
                 // 新用户，自动注册
@@ -57,12 +66,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     newUser.setAvatarUrl("https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9VemZoJ8rg/132");
                 }
 
+                // 设置手机号
+                if (phone != null && !phone.trim().isEmpty()) {
+                    // 检查手机号是否已被绑定
+                    User userWithSamePhone = getUserByPhone(phone);
+                    if (userWithSamePhone != null) {
+                        return Result.error("该手机号已被其他用户绑定");
+                    }
+                    newUser.setPhone(phone);
+                }
+
                 newUser.setCreatedTime(LocalDateTime.now());
                 newUser.setUpdatedTime(LocalDateTime.now());
 
                 boolean saved = save(newUser);
                 if (saved) {
-                    log.info("新用户注册成功: {}", newUser.getNickname());
+                    log.info("新用户注册成功: {}, phone: {}", newUser.getNickname(), phone);
                     return Result.success(newUser);
                 } else {
                     log.error("用户注册失败");
@@ -76,9 +95,114 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    public Result<User> loginByPhone(String phone) {
+        try {
+            log.info("手机号登录，phone: {}", phone);
+
+            if (phone == null || !phone.matches("^1[3-9]\\d{9}$")) {
+                return Result.error("手机号格式不正确");
+            }
+
+            User user = getUserByPhone(phone);
+            if (user != null) {
+                log.info("手机号登录成功: {}", user.getNickname());
+                return Result.success(user);
+            } else {
+                log.info("手机号未注册: {}", phone);
+                return Result.error("该手机号未注册");
+            }
+        } catch (Exception e) {
+            log.error("手机号登录异常", e);
+            return Result.error("登录异常: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public Result<User> registerOrLogin(String code, UserInfo requestUserInfo, String phone) {
+        try {
+            log.info("注册或登录，code: {}, phone: {}", code, phone);
+
+            // 验证手机号格式
+            if (phone == null || !phone.matches("^1[3-9]\\d{9}$")) {
+                return Result.error("手机号格式不正确");
+            }
+
+            // 生成模拟的openid（开发环境使用）
+            String openid = generateMockOpenid(code);
+
+            // 检查用户是否已存在
+            User existingUser = getUserByOpenid(openid);
+
+            if (existingUser != null) {
+                log.info("用户已存在，更新用户信息: {}", existingUser.getNickname());
+
+                // 检查手机号是否已被其他用户绑定
+                User userWithSamePhone = getUserByPhone(phone);
+                if (userWithSamePhone != null && !userWithSamePhone.getId().equals(existingUser.getId())) {
+                    return Result.error("该手机号已被其他用户绑定");
+                }
+
+                // 更新用户信息
+                if (requestUserInfo != null) {
+                    existingUser.setNickname(requestUserInfo.getNickname());
+                    existingUser.setAvatarUrl(requestUserInfo.getAvatarUrl());
+                }
+                existingUser.setPhone(phone);
+                existingUser.setUpdatedTime(LocalDateTime.now());
+                updateById(existingUser);
+
+                log.info("用户信息更新成功，绑定手机号: {}", phone);
+                return Result.success(existingUser);
+            } else {
+                // 新用户，自动注册
+                User newUser = new User();
+                newUser.setOpenid(openid);
+                newUser.setPhone(phone);
+
+                if (requestUserInfo != null) {
+                    newUser.setNickname(requestUserInfo.getNickname());
+                    newUser.setAvatarUrl(requestUserInfo.getAvatarUrl());
+                } else {
+                    newUser.setNickname("手机用户_" + phone.substring(7));
+                    newUser.setAvatarUrl("https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9VemZoJ8rg/132");
+                }
+
+                // 检查手机号是否已被绑定
+                User userWithSamePhone = getUserByPhone(phone);
+                if (userWithSamePhone != null) {
+                    return Result.error("该手机号已被其他用户绑定");
+                }
+
+                newUser.setCreatedTime(LocalDateTime.now());
+                newUser.setUpdatedTime(LocalDateTime.now());
+
+                boolean saved = save(newUser);
+                if (saved) {
+                    log.info("新用户注册成功: {}, phone: {}", newUser.getNickname(), phone);
+                    return Result.success(newUser);
+                } else {
+                    log.error("用户注册失败");
+                    return Result.error("注册失败");
+                }
+            }
+        } catch (Exception e) {
+            log.error("注册或登录异常", e);
+            return Result.error("注册或登录异常: " + e.getMessage());
+        }
+    }
+
+    @Override
     public User getUserByOpenid(String openid) {
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getOpenid, openid);
+        return getOne(queryWrapper);
+    }
+
+    @Override
+    public User getUserByPhone(String phone) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getPhone, phone);
         return getOne(queryWrapper);
     }
 
@@ -103,6 +227,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 existingUser.setAvatarUrl(user.getAvatarUrl());
             }
             if (user.getPhone() != null) {
+                // 检查手机号是否已被其他用户绑定
+                User userWithSamePhone = getUserByPhone(user.getPhone());
+                if (userWithSamePhone != null && !userWithSamePhone.getId().equals(existingUser.getId())) {
+                    return Result.error("该手机号已被其他用户绑定");
+                }
                 existingUser.setPhone(user.getPhone());
             }
             existingUser.setUpdatedTime(LocalDateTime.now());

@@ -8,11 +8,29 @@ import com.jiumo.weicanjie.common.Result;
 public interface UserService extends IService<User> {
 
     /**
-     * 微信登录
+     * 微信登录（重写为支持手机号）
      * @param code 微信登录code
+     * @param userInfo 用户信息
+     * @param phone 手机号（可选）
      * @return 用户信息
      */
-    Result<User> wechatLogin(String code, LoginRequest.UserInfo userInfo);
+    Result<User> wechatLogin(String code, LoginRequest.UserInfo userInfo, String phone);
+
+    /**
+     * 手机号登录
+     * @param phone 手机号
+     * @return 用户信息
+     */
+    Result<User> loginByPhone(String phone);
+
+    /**
+     * 注册或登录（整合接口）
+     * @param code 微信登录code
+     * @param userInfo 用户信息
+     * @param phone 手机号
+     * @return 用户信息
+     */
+    Result<User> registerOrLogin(String code, LoginRequest.UserInfo userInfo, String phone);
 
     /**
      * 根据openid获取用户
@@ -20,6 +38,13 @@ public interface UserService extends IService<User> {
      * @return 用户信息
      */
     User getUserByOpenid(String openid);
+
+    /**
+     * 根据手机号获取用户
+     * @param phone 手机号
+     * @return 用户信息
+     */
+    User getUserByPhone(String phone);
 
     /**
      * 更新用户信息

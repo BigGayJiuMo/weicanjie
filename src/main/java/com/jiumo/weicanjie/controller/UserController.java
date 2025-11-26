@@ -20,13 +20,34 @@ public class UserController {
     private UserService userService;
 
     /**
-     * 微信登录
+     * 微信登录 - 重写为支持手机号注册和登录
      */
     @PostMapping("/login")
     public Result<User> login(@RequestBody LoginRequest request) {
         System.out.println("收到登录请求，code: " + request.getCode());
         System.out.println("用户信息: " + request.getUserInfo());
-        return userService.wechatLogin(request.getCode(), request.getUserInfo());
+        System.out.println("手机号: " + request.getPhone());
+        return userService.wechatLogin(request.getCode(), request.getUserInfo(), request.getPhone());
+    }
+
+    /**
+     * 手机号登录
+     */
+    @PostMapping("/loginByPhone")
+    public Result<User> loginByPhone(@RequestBody PhoneLoginRequest request) {
+        System.out.println("手机号登录请求，phone: " + request.getPhone());
+        return userService.loginByPhone(request.getPhone());
+    }
+
+    /**
+     * 注册或登录（整合接口）
+     */
+    @PostMapping("/registerOrLogin")
+    public Result<User> registerOrLogin(@RequestBody RegisterOrLoginRequest request) {
+        System.out.println("注册或登录请求，code: " + request.getCode());
+        System.out.println("用户信息: " + request.getUserInfo());
+        System.out.println("手机号: " + request.getPhone());
+        return userService.registerOrLogin(request.getCode(), request.getUserInfo(), request.getPhone());
     }
 
     /**
@@ -107,5 +128,23 @@ public class UserController {
         private Long userId;
         private String nickname;
         private String avatarUrl;
+    }
+
+    /**
+     * 手机号登录请求体
+     */
+    @Data
+    public static class PhoneLoginRequest {
+        private String phone;
+    }
+
+    /**
+     * 注册或登录请求体
+     */
+    @Data
+    public static class RegisterOrLoginRequest {
+        private String code;
+        private LoginRequest.UserInfo userInfo;
+        private String phone;
     }
 }
