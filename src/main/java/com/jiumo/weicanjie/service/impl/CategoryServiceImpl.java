@@ -23,6 +23,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Autowired
     private DishMapper dishMapper;
 
+    /**
+     * 根据餐厅ID获取分类列表
+     * @param restaurantId 餐厅ID
+     * @return 分类列表结果
+     */
     @Override
     public Result<List<Category>> getCategoriesByRestaurant(Long restaurantId) {
         try {
@@ -34,14 +39,23 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         }
     }
 
+    /**
+     * 根据餐厅ID获取分类及菜品信息
+     * @param restaurantId 餐厅ID
+     * @return 分类及菜品结果
+     */
     @Override
     public Result<List<Category>> getCategoriesWithDishes(Long restaurantId) {
         try {
+            // 获取餐厅分类列表
             List<Category> categories = categoryMapper.selectByRestaurantId(restaurantId);
+
+            // 为每个分类加载菜品信息
             for (Category category : categories) {
                 List<Dish> dishes = dishMapper.selectByCategoryId(category.getId());
                 category.setDishes(dishes);
             }
+
             return Result.success(categories);
         } catch (Exception e) {
             log.error("获取分类及菜品异常", e);

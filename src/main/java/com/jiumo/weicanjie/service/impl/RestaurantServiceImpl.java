@@ -28,6 +28,10 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     @Autowired
     private BusinessHoursMapper businessHoursMapper;
 
+    /**
+     * 获取营业中的餐厅列表
+     * @return 餐厅列表结果
+     */
     @Override
     public Result<List<Restaurant>> getActiveRestaurants() {
         try {
@@ -39,19 +43,25 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         }
     }
 
+    /**
+     * 获取餐厅详情（包含营业时间、分类和菜品信息）
+     * @param id 餐厅ID
+     * @return 餐厅详情结果
+     */
     @Override
     public Result<Restaurant> getRestaurantDetail(Long id) {
         try {
+            // 查询餐厅基本信息
             Restaurant restaurant = restaurantMapper.selectById(id);
             if (restaurant == null) {
                 return Result.error("餐厅不存在");
             }
 
-            // 获取营业时间
+            // 获取营业时间信息
             List<BusinessHours> businessHours = businessHoursMapper.selectByRestaurantId(id);
             restaurant.setBusinessHours(businessHours);
 
-            // 获取分类及菜品
+            // 获取分类及菜品信息
             List<Category> categories = categoryMapper.selectByRestaurantId(id);
             for (Category category : categories) {
                 List<Dish> dishes = dishMapper.selectByCategoryId(category.getId());
@@ -66,6 +76,10 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         }
     }
 
+    /**
+     * 获取所有餐厅列表
+     * @return 餐厅列表结果
+     */
     @Override
     public Result<List<Restaurant>> getAllRestaurants() {
         try {
