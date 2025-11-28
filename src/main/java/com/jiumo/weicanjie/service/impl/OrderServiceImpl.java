@@ -46,11 +46,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             order.setStatus(1); // 待支付
             order.setPayStatus(0); // 未支付
 
-            // 手动设置创建时间和更新时间
-            LocalDateTime now = LocalDateTime.now();
-            order.setCreatedTime(now);
-            order.setUpdatedTime(now);
-
             // 保存订单
             boolean saved = save(order);
             if (!saved) {
@@ -67,7 +62,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 orderItem.setDishPrice(new BigDecimal(item.get("dishPrice").toString()));
                 orderItem.setQuantity(Integer.valueOf(item.get("quantity").toString()));
                 orderItem.setSubtotal(new BigDecimal(item.get("subtotal").toString()));
-                orderItem.setCreatedTime(now);
+                orderItem.setCreatedTime(LocalDateTime.now());
 
                 orderItems.add(orderItem);
             }
@@ -79,8 +74,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
             order.setOrderItems(orderItems);
 
-            log.info("订单创建成功，订单号: {}, 总金额: {}, 创建时间: {}",
-                    orderNumber, order.getTotalAmount(), order.getCreatedTime());
+            log.info("订单创建成功，订单号: {}, 总金额: {}", orderNumber, order.getTotalAmount());
             return Result.success(order);
 
         } catch (Exception e) {
