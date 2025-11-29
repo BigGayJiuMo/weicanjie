@@ -17,6 +17,9 @@ public class Order {
     private Long restaurantId;
     private String orderNumber;
     private BigDecimal totalAmount;
+    private BigDecimal packingFee; // 打包费
+    private BigDecimal deliveryFee; // 配送费
+
     private Integer status; // 1-待支付，2-待处理，3-配送中，4-已完成，5-已取消
     private Integer payStatus; // 0-未支付，1-已支付，2-支付失败，3-已退款
     private String transactionId;

@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,10 +27,6 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     @Autowired
     private BusinessHoursMapper businessHoursMapper;
 
-    /**
-     * 获取营业中的餐厅列表
-     * @return 餐厅列表结果
-     */
     @Override
     public Result<List<Restaurant>> getActiveRestaurants() {
         try {
@@ -43,11 +38,6 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         }
     }
 
-    /**
-     * 获取餐厅详情（包含营业时间、分类和菜品信息）
-     * @param id 餐厅ID
-     * @return 餐厅详情结果
-     */
     @Override
     public Result<Restaurant> getRestaurantDetail(Long id) {
         try {
@@ -76,14 +66,11 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         }
     }
 
-    /**
-     * 获取所有餐厅列表
-     * @return 餐厅列表结果
-     */
     @Override
     public Result<List<Restaurant>> getAllRestaurants() {
         try {
-            List<Restaurant> restaurants = restaurantMapper.selectList(null);
+            // 使用新的查询方法获取所有餐厅
+            List<Restaurant> restaurants = restaurantMapper.selectAllRestaurants();
             return Result.success(restaurants);
         } catch (Exception e) {
             log.error("获取所有餐厅列表异常", e);

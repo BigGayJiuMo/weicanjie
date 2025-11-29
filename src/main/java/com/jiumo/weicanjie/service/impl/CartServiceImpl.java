@@ -1,168 +1,88 @@
 package com.jiumo.weicanjie.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.Cart;
-import com.jiumo.weicanjie.entity.Dish;
 import com.jiumo.weicanjie.mapper.CartMapper;
-import com.jiumo.weicanjie.mapper.DishMapper;
+import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.service.CartService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements CartService {
 
     @Autowired
     private CartMapper cartMapper;
 
-    @Autowired
-    private DishMapper dishMapper;
+    @Override
+    public Result<List<Cart>> getUserCartList(Long userId) {
+        try {
+            List<Cart> cartList = cartMapper.selectByUserId(userId);
+            return Result.success(cartList);
+        } catch (Exception e) {
+            return Result.error("获取购物车列表失败: " + e.getMessage());
+        }
+    }
 
     @Override
-    public Result<List<Cart>> getUserCart(Long userId, Long restaurantId) {
+    public Result<Map<Long, Integer>> getUserCartMap(Long userId, Long restaurantId) {
         try {
-            if (userId == null || restaurantId == null) {
-                return Result.error("参数不能为空");
-            }
-
-            List<Cart> cartItems = cartMapper.selectCartWithDishInfo(userId, restaurantId);
-            log.info("获取用户购物车，userId: {}, restaurantId: {}, 商品数量: {}",
-                    userId, restaurantId, cartItems.size());
-
-            return Result.success(cartItems);
+            List<Cart> cartList = cartMapper.selectByUserAndRestaurant(userId, restaurantId);
+            Map<Long, Integer> cartMap = cartList.stream()
+                    .collect(Collectors.toMap(Cart::getDishId, Cart::getQuantity));
+            return Result.success(cartMap);
         } catch (Exception e) {
-            log.error("获取用户购物车异常", e);
-            return Result.error("获取购物车失败");
+            return Result.error("获取购物车映射失败: " + e.getMessage());
         }
     }
 
     @Override
     @Transactional
-    public Result<Cart> addToCart(Long userId, Long restaurantId, Long dishId, Integer quantity) {
+    public Result<String> addToCart(Cart cart) {
         try {
-            if (userId == null || restaurantId == null || dishId == null || quantity == null || quantity <= 0) {
-                return Result.error("参数错误");
-            }
-
-            // 检查菜品是否存在且库存充足
-            Dish dish = dishMapper.selectById(dishId);
-            if (dish == null) {
-                return Result.error("菜品不存在");
-            }
-
-            if (dish.getStock() < quantity) {
-                return Result.error("库存不足");
-            }
-
-            // 检查是否已存在购物车记录
-            LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(Cart::getUserId, userId)
-                    .eq(Cart::getRestaurantId, restaurantId)
-                    .eq(Cart::getDishId, dishId);
-
-            Cart existingCart = getOne(queryWrapper);
-
+            // 检查是否已存在
+            Cart existingCart = cartMapper.selectByUserAndDish(cart.getUserId(), cart.getRestaurantId(), cart.getDishId());
             if (existingCart != null) {
-                // 更新数量
-                int newQuantity = existingCart.getQuantity() + quantity;
-                if (dish.getStock() < newQuantity) {
-                    return Result.error("库存不足");
-                }
-                existingCart.setQuantity(newQuantity);
-                existingCart.setUpdatedTime(LocalDateTime.now());
-                updateById(existingCart);
-                log.info("更新购物车商品数量，userId: {}, dishId: {}, 新数量: {}",
-                        userId, dishId, newQuantity);
-                return Result.success(existingCart);
+                // 如果已存在，更新数量
+                existingCart.setQuantity(existingCart.getQuantity() + cart.getQuantity());
+                cartMapper.updateById(existingCart);
+                return Result.success("更新成功");
             } else {
-                // 新增购物车记录
-                Cart newCart = new Cart();
-                newCart.setUserId(userId);
-                newCart.setRestaurantId(restaurantId);
-                newCart.setDishId(dishId);
-                newCart.setQuantity(quantity);
-                newCart.setPrice(dish.getPrice()); // 记录加入时的价格
-                newCart.setCreatedTime(LocalDateTime.now());
-                newCart.setUpdatedTime(LocalDateTime.now());
-
-                boolean saved = save(newCart);
-                if (saved) {
-                    log.info("添加商品到购物车，userId: {}, dishId: {}, quantity: {}",
-                            userId, dishId, quantity);
-                    return Result.success(newCart);
-                } else {
-                    return Result.error("添加失败");
-                }
+                // 新增
+                cartMapper.insert(cart);
+                return Result.success("添加成功");
             }
         } catch (Exception e) {
-            log.error("添加购物车异常", e);
-            return Result.error("添加失败");
+            return Result.error("添加购物车失败: " + e.getMessage());
         }
     }
 
     @Override
     @Transactional
-    public Result<Cart> updateCartItem(Long userId, Long restaurantId, Long dishId, Integer quantity) {
+    public Result<String> updateCartQuantity(Long userId, Long restaurantId, Long dishId, Integer quantity) {
         try {
-            if (userId == null || restaurantId == null || dishId == null || quantity == null) {
-                return Result.error("参数错误");
-            }
-
-            if (quantity < 0) {
-                return Result.error("数量不能为负数");
-            }
-
-            // 检查菜品库存
-            Dish dish = dishMapper.selectById(dishId);
-            if (dish == null) {
-                return Result.error("菜品不存在");
-            }
-
-            if (quantity > 0 && dish.getStock() < quantity) {
-                return Result.error("库存不足");
-            }
-
-            LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(Cart::getUserId, userId)
-                    .eq(Cart::getRestaurantId, restaurantId)
-                    .eq(Cart::getDishId, dishId);
-
-            Cart cartItem = getOne(queryWrapper);
-
-            if (cartItem == null) {
-                // 如果购物车商品不存在，返回错误信息，让前端调用添加接口
+            Cart cart = cartMapper.selectByUserAndDish(userId, restaurantId, dishId);
+            if (cart == null) {
                 return Result.error("购物车商品不存在");
             }
 
-            if (quantity == 0) {
-                // 数量为0时删除记录
-                removeById(cartItem.getId());
-                log.info("删除购物车商品，userId: {}, dishId: {}", userId, dishId);
-                return Result.success(null);
+            if (quantity <= 0) {
+                // 如果数量为0或负数，移除商品
+                cartMapper.deleteById(cart.getId());
             } else {
                 // 更新数量
-                cartItem.setQuantity(quantity);
-                cartItem.setUpdatedTime(LocalDateTime.now());
-                updateById(cartItem);
-                log.info("更新购物车商品数量，userId: {}, dishId: {}, 新数量: {}",
-                        userId, dishId, quantity);
-                return Result.success(cartItem);
+                cart.setQuantity(quantity);
+                cartMapper.updateById(cart);
             }
+            return Result.success("更新成功");
         } catch (Exception e) {
-            log.error("更新购物车异常", e);
-            return Result.error("更新失败");
+            return Result.error("更新购物车失败: " + e.getMessage());
         }
     }
 
@@ -170,67 +90,65 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     @Transactional
     public Result<String> removeFromCart(Long userId, Long restaurantId, Long dishId) {
         try {
-            if (userId == null || restaurantId == null || dishId == null) {
-                return Result.error("参数错误");
+            Cart cart = cartMapper.selectByUserAndDish(userId, restaurantId, dishId);
+            if (cart != null) {
+                cartMapper.deleteById(cart.getId());
             }
-
-            LambdaQueryWrapper<Cart> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(Cart::getUserId, userId)
-                    .eq(Cart::getRestaurantId, restaurantId)
-                    .eq(Cart::getDishId, dishId);
-
-            boolean removed = remove(queryWrapper);
-            if (removed) {
-                log.info("从购物车移除商品，userId: {}, dishId: {}", userId, dishId);
-                return Result.success("移除成功");
-            } else {
-                // 如果商品不存在，也返回成功
-                log.info("购物车商品不存在，userId: {}, dishId: {}", userId, dishId);
-                return Result.success("商品不存在");
-            }
+            return Result.success("移除成功");
         } catch (Exception e) {
-            log.error("移除购物车商品异常", e);
-            return Result.error("移除失败");
+            return Result.error("移除购物车失败: " + e.getMessage());
         }
     }
 
     @Override
     @Transactional
-    public Result<String> clearCart(Long userId, Long restaurantId) {
+    public Result<String> clearUserCart(Long userId, Long restaurantId) {
         try {
-            if (userId == null || restaurantId == null) {
-                return Result.error("参数错误");
-            }
-
-            int deleted = cartMapper.deleteByUserAndRestaurant(userId, restaurantId);
-            log.info("清空用户购物车，userId: {}, restaurantId: {}, 删除记录数: {}",
-                    userId, restaurantId, deleted);
-
+            cartMapper.deleteByUserAndRestaurant(userId, restaurantId);
             return Result.success("清空成功");
         } catch (Exception e) {
-            log.error("清空购物车异常", e);
-            return Result.error("清空失败");
+            return Result.error("清空购物车失败: " + e.getMessage());
         }
     }
 
     @Override
-    public Result<Map<Long, Integer>> getCartItemMap(Long userId, Long restaurantId) {
+    @Transactional
+    public Result<String> clearAllUserCart(Long userId) {
         try {
-            if (userId == null || restaurantId == null) {
-                return Result.error("参数错误");
-            }
-
-            List<Cart> cartItems = cartMapper.selectCartWithDishInfo(userId, restaurantId);
-            Map<Long, Integer> cartMap = cartItems.stream()
-                    .collect(Collectors.toMap(Cart::getDishId, Cart::getQuantity));
-
-            log.info("获取购物车商品映射，userId: {}, restaurantId: {}, 商品数量: {}",
-                    userId, restaurantId, cartMap.size());
-
-            return Result.success(cartMap);
+            cartMapper.deleteByUserId(userId);
+            return Result.success("清空成功");
         } catch (Exception e) {
-            log.error("获取购物车映射异常", e);
-            return Result.error("获取失败");
+            return Result.error("清空购物车失败: " + e.getMessage());
         }
+    }
+
+    @Override
+    @Transactional
+    public Result<String> removeRestaurantCart(Long userId, Long restaurantId) {
+        try {
+            cartMapper.deleteByUserAndRestaurant(userId, restaurantId);
+            return Result.success("删除成功");
+        } catch (Exception e) {
+            return Result.error("删除购物车失败: " + e.getMessage());
+        }
+    }
+
+    // 新增方法实现
+    @Override
+    public Result<Map<Long, Integer>> getUserCart(Long userId, Long restaurantId) {
+        // 直接调用已有的方法
+        return getUserCartMap(userId, restaurantId);
+    }
+
+    @Override
+    public Result<String> updateCartItem(Long userId, Long restaurantId, Long dishId, Integer quantity) {
+        // 直接调用已有的方法
+        return updateCartQuantity(userId, restaurantId, dishId, quantity);
+    }
+
+    @Override
+    public Result<Map<Long, Integer>> getCartItemMap(Long userId, Long restaurantId) {
+        // 直接调用已有的方法
+        return getUserCartMap(userId, restaurantId);
     }
 }

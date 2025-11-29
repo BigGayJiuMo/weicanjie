@@ -1,8 +1,10 @@
 package com.jiumo.weicanjie.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.jiumo.weicanjie.controller.OrderController;
 import com.jiumo.weicanjie.entity.Order;
 import com.jiumo.weicanjie.common.Result;
+import com.jiumo.weicanjie.entity.OrderRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -12,7 +14,12 @@ public interface OrderService extends IService<Order> {
     /**
      * 创建订单
      */
-    Result<Order> createOrder(Order order, List<Map<String, Object>> items);
+    Result<Order> createOrder(OrderRequest.OrderDTO order, List<OrderRequest.OrderItemRequest> items);
+
+    /**
+     * 批量创建订单
+     */
+    Result<List<Order>> createBatchOrders(List<OrderController.BatchOrderRequest.SingleOrderRequest> orderRequests);
 
     /**
      * 获取用户订单列表
@@ -23,6 +30,11 @@ public interface OrderService extends IService<Order> {
      * 获取订单详情
      */
     Result<Order> getOrderDetail(Long orderId);
+
+    /**
+     * 获取订单完整详情（包含餐厅、订单项等完整信息）
+     */
+    Result<Map<String, Object>> getOrderFullDetail(Long orderId);
 
     /**
      * 更新订单状态
@@ -38,6 +50,11 @@ public interface OrderService extends IService<Order> {
      * 取消支付
      */
     Result<String> cancelPayment(Long orderId);
+
+    /**
+     * 取消订单
+     */
+    Result<String> cancelOrder(Long orderId);
 
     /**
      * 根据订单号查询订单

@@ -1,4 +1,3 @@
-// Restaurant.java
 package com.jiumo.weicanjie.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
@@ -21,11 +20,11 @@ public class Restaurant {
     private Integer status;
 
     // 新增字段
-    private String bannerUrls; // JSON字符串存储横幅图片
     private Double avgRating;
     private Integer monthlySales;
     private Double minOrderAmount;
     private Double deliveryFee;
+    private Double packingFee; // 新增打包费字段
     private String deliveryTime;
     private Integer businessStatus;
 

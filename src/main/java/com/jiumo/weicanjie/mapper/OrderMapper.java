@@ -20,6 +20,8 @@ public interface OrderMapper extends BaseMapper<Order> {
     @Update("UPDATE orders SET status = #{status}, updated_time = NOW() WHERE id = #{orderId}")
     int updateOrderStatus(Long orderId, Integer status);
 
-    @Update("UPDATE orders SET status = #{status}, pay_status = #{payStatus}, transaction_id = #{transactionId}, pay_time = NOW(), updated_time = NOW() WHERE id = #{orderId}")
+    @Update("UPDATE orders SET status = #{status}, pay_status = #{payStatus}, " +
+            "transaction_id = #{transactionId}, pay_time = NOW(), updated_time = NOW() " +
+            "WHERE id = #{orderId}")
     int updateOrderPaymentStatus(Long orderId, Integer status, Integer payStatus, String transactionId);
 }

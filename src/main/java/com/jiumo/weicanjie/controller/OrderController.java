@@ -2,6 +2,7 @@ package com.jiumo.weicanjie.controller;
 
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.Order;
+import com.jiumo.weicanjie.entity.OrderRequest;
 import com.jiumo.weicanjie.service.OrderService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,16 @@ public class OrderController {
      * 创建订单
      */
     @PostMapping("/create")
-    public Result<Order> createOrder(@RequestBody CreateOrderRequest request) {
+    public Result<Order> createOrder(@RequestBody OrderRequest request) {
         return orderService.createOrder(request.getOrder(), request.getItems());
+    }
+
+    /**
+     * 批量创建订单
+     */
+    @PostMapping("/create/batch")
+    public Result<List<Order>> createBatchOrders(@RequestBody BatchOrderRequest request) {
+        return orderService.createBatchOrders(request.getRestaurants());
     }
 
     /**
@@ -42,6 +51,14 @@ public class OrderController {
     }
 
     /**
+     * 获取订单完整详情（包含餐厅、订单项等完整信息）
+     */
+    @GetMapping("/detail/{orderId}")
+    public Result<Map<String, Object>> getOrderFullDetail(@PathVariable Long orderId) {
+        return orderService.getOrderFullDetail(orderId);
+    }
+
+    /**
      * 模拟微信支付
      */
     @PostMapping("/pay/{orderId}")
@@ -58,6 +75,14 @@ public class OrderController {
     }
 
     /**
+     * 取消订单
+     */
+    @PostMapping("/cancelOrder/{orderId}")
+    public Result<String> cancelOrder(@PathVariable Long orderId) {
+        return orderService.cancelOrder(orderId);
+    }
+
+    /**
      * 根据订单号查询订单
      */
     @GetMapping("/number/{orderNumber}")
@@ -66,8 +91,13 @@ public class OrderController {
     }
 
     @Data
-    public static class CreateOrderRequest {
-        private Order order;
-        private List<Map<String, Object>> items;
+    public static class BatchOrderRequest {
+        private List<SingleOrderRequest> restaurants;
+
+        @Data
+        public static class SingleOrderRequest {
+            private OrderRequest.OrderDTO order;
+            private List<OrderRequest.OrderItemRequest> items;
+        }
     }
 }
