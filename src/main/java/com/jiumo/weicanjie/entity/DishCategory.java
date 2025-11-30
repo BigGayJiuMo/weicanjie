@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 @TableName("category")
-public class Category {
+public class DishCategory {
     @TableId(type = IdType.AUTO)
     private Long id;
 

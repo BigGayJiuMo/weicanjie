@@ -26,4 +26,10 @@ public interface RestaurantService extends IService<Restaurant> {
      * @return 餐厅列表结果
      */
     Result<List<Restaurant>> getAllRestaurants();
+
+    /**
+     * 获取餐厅分类
+     * @return 餐厅分类结果
+     */
+    Result<List<Restaurant>> getByCategory(Integer categoryId);
 }

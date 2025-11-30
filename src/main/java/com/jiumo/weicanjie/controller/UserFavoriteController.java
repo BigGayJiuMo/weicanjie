@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/favorite")
-public class FavoriteController {
+public class UserFavoriteController {
 
     @Autowired
     private UserFavoriteService userFavoriteService;

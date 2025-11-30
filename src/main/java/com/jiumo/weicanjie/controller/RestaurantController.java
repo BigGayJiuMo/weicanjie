@@ -51,4 +51,12 @@ public class RestaurantController {
             return Result.error("餐厅不存在");
         }
     }
+
+    /**
+     * 获取餐厅分类信息
+     */
+    @GetMapping("/listByCategory")
+    public Result<List<Restaurant>> listByCategory(@RequestParam Integer categoryId) {
+        return restaurantService.getByCategory(categoryId);
+    }
 }

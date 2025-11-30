@@ -19,7 +19,7 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     private RestaurantMapper restaurantMapper;
 
     @Autowired
-    private CategoryMapper categoryMapper;
+    private DishCategoryMapper dishCategoryMapper;
 
     @Autowired
     private DishMapper dishMapper;
@@ -52,10 +52,10 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             restaurant.setBusinessHours(businessHours);
 
             // 获取分类及菜品信息
-            List<Category> categories = categoryMapper.selectByRestaurantId(id);
-            for (Category category : categories) {
-                List<Dish> dishes = dishMapper.selectByCategoryId(category.getId());
-                category.setDishes(dishes);
+            List<DishCategory> categories = dishCategoryMapper.selectByRestaurantId(id);
+            for (DishCategory dishCategory : categories) {
+                List<Dish> dishes = dishMapper.selectByCategoryId(dishCategory.getId());
+                dishCategory.setDishes(dishes);
             }
             restaurant.setCategories(categories);
 
@@ -75,6 +75,17 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         } catch (Exception e) {
             log.error("获取所有餐厅列表异常", e);
             return Result.error("获取餐厅列表失败");
+        }
+    }
+
+    @Override
+    public Result<List<Restaurant>> getByCategory(Integer categoryId) {
+        try {
+            List<Restaurant> list = restaurantMapper.selectByCategory(categoryId);
+            return Result.success(list);
+        } catch (Exception e) {
+            log.error("按分类查询餐厅失败", e);
+            return Result.error("查询失败");
         }
     }
 }

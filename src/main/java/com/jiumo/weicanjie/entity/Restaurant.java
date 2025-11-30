@@ -24,9 +24,12 @@ public class Restaurant {
     private Integer monthlySales;
     private Double minOrderAmount;
     private Double deliveryFee;
-    private Double packingFee; // 新增打包费字段
+    private Double packingFee;
     private String deliveryTime;
     private Integer businessStatus;
+
+    @TableField("category_type")
+    private Integer categoryType;
 
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -42,5 +45,5 @@ public class Restaurant {
 
     // 非数据库字段 - 分类列表
     @TableField(exist = false)
-    private List<Category> categories;
+    private List<DishCategory> categories;
 }

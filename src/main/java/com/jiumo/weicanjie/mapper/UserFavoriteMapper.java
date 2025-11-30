@@ -5,5 +5,5 @@ import com.jiumo.weicanjie.entity.UserFavorite;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface FavoriteMapper extends BaseMapper<UserFavorite> {
+public interface UserFavoriteMapper extends BaseMapper<UserFavorite> {
 }
