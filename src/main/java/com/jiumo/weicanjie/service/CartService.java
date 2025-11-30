@@ -21,7 +21,7 @@ public interface CartService extends IService<Cart> {
     /**
      * 添加商品到购物车
      */
-    Result<String> addToCart(Cart cart);
+    Result<String> saveCart(List<Cart> cartList);
 
     /**
      * 更新购物车商品数量
@@ -48,12 +48,18 @@ public interface CartService extends IService<Cart> {
      */
     Result<String> removeRestaurantCart(Long userId, Long restaurantId);
 
-    // 新增方法：根据用户和餐厅获取购物车
+    /**
+     * 根据用户和餐厅获取购物车
+     */
     Result<Map<Long, Integer>> getUserCart(Long userId, Long restaurantId);
 
-    // 新增方法：更新购物车项
+    /**
+     * 更新购物车项
+     */
     Result<String> updateCartItem(Long userId, Long restaurantId, Long dishId, Integer quantity);
 
-    // 新增方法：获取购物车项映射
+    /**
+     * 获取购物车项映射
+     */
     Result<Map<Long, Integer>> getCartItemMap(Long userId, Long restaurantId);
 }

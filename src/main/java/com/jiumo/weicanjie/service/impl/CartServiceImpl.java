@@ -44,24 +44,29 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
 
     @Override
     @Transactional
-    public Result<String> addToCart(Cart cart) {
+    public Result<String> saveCart(List<Cart> cartList) {
         try {
-            // 检查是否已存在
-            Cart existingCart = cartMapper.selectByUserAndDish(cart.getUserId(), cart.getRestaurantId(), cart.getDishId());
-            if (existingCart != null) {
-                // 如果已存在，更新数量
-                existingCart.setQuantity(existingCart.getQuantity() + cart.getQuantity());
-                cartMapper.updateById(existingCart);
-                return Result.success("更新成功");
-            } else {
-                // 新增
-                cartMapper.insert(cart);
-                return Result.success("添加成功");
+            if (cartList == null || cartList.isEmpty()) {
+                return Result.success("空购物车，无需保存");
             }
+
+            Long userId = cartList.get(0).getUserId();
+            Long restaurantId = cartList.get(0).getRestaurantId();
+
+            // 清空旧购物车（覆盖式）
+            cartMapper.deleteByUserAndRestaurant(userId, restaurantId);
+
+            // 重新插入
+            for (Cart cart : cartList) {
+                cartMapper.insert(cart);
+            }
+
+            return Result.success("保存成功");
         } catch (Exception e) {
-            return Result.error("添加购物车失败: " + e.getMessage());
+            return Result.error("保存购物车失败: " + e.getMessage());
         }
     }
+
 
     @Override
     @Transactional

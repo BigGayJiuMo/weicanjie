@@ -3,6 +3,7 @@ package com.jiumo.weicanjie.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.controller.OrderController;
 import com.jiumo.weicanjie.entity.*;
+import com.jiumo.weicanjie.mapper.OrderItemMapper;
 import com.jiumo.weicanjie.mapper.OrderMapper;
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.service.CartService;
@@ -34,6 +35,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Autowired
     private CartService cartService;
 
+    @Autowired
+    private OrderItemMapper orderItemMapper;
+
     @Override
     @Transactional
     public Result<Order> createOrder(OrderRequest.OrderDTO orderDTO, List<OrderRequest.OrderItemRequest> items) {
@@ -44,13 +48,41 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             // 创建订单
             Order order = new Order();
             BeanUtils.copyProperties(orderDTO, order);
+
             order.setOrderNumber(orderNumber);
             order.setStatus(1); // 待支付
             order.setPayStatus(0); // 未支付
             order.setCreatedTime(LocalDateTime.now());
             order.setUpdatedTime(LocalDateTime.now());
+            // 配送费
+            if (orderDTO.getDeliveryFee() == null) {
+                order.setDeliveryFee(BigDecimal.ZERO);
+            } else {
+                order.setDeliveryFee(orderDTO.getDeliveryFee());
+            }
 
-            // 保存订单
+            // 打包费
+            if (orderDTO.getPackingFee() == null) {
+                order.setPackingFee(BigDecimal.ZERO);
+            } else {
+                order.setPackingFee(orderDTO.getPackingFee());
+            }
+
+            // 总金额（如果前端传了就写入）
+            if (orderDTO.getTotalAmount() == null) {
+                // 计算总金额：菜品小计 + 配送费 + 打包费
+                BigDecimal itemsTotal = items.stream()
+                        .map(i -> i.getDishPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                BigDecimal total = itemsTotal
+                        .add(order.getDeliveryFee())
+                        .add(order.getPackingFee());
+
+                order.setTotalAmount(total);
+            } else {
+                order.setTotalAmount(orderDTO.getTotalAmount());
+            }
             orderMapper.insert(order);
 
             // 保存订单项
@@ -58,24 +90,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 OrderItem orderItem = new OrderItem();
                 BeanUtils.copyProperties(item, orderItem);
                 orderItem.setOrderId(order.getId());
-                orderItem.setDishName(item.getDishName());
-                orderItem.setDishPrice(item.getDishPrice());
-                orderItem.setQuantity(item.getQuantity());
                 orderItem.setSubtotal(item.getDishPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
                 orderItem.setCreatedTime(LocalDateTime.now());
                 return orderItem;
             }).collect(Collectors.toList());
 
-            // 批量保存订单项
             for (OrderItem item : orderItems) {
-                // 这里需要实现 OrderItem 的保存逻辑
-                // orderItemMapper.insert(item);
+                orderItemMapper.insert(item);
             }
 
             // 清空购物车
             cartService.clearUserCart(order.getUserId(), order.getRestaurantId());
 
             return Result.success(order);
+
         } catch (Exception e) {
             return Result.error("创建订单失败: " + e.getMessage());
         }
@@ -145,8 +173,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             // 获取餐厅信息
             Restaurant restaurant = restaurantService.getById(order.getRestaurantId());
 
-            // 获取订单项列表
-            List<OrderItem> orderItems = new ArrayList<>(); // 这里需要实现获取订单项的逻辑
+            // ★ 获取订单项列表（含图片）
+            List<OrderItem> orderItems = orderItemMapper.selectByOrderIdWithDishInfo(orderId);
 
             // 计算菜品小计
             BigDecimal subTotal = orderItems.stream()
@@ -163,6 +191,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             result.put("totalAmount", order.getTotalAmount());
 
             return Result.success(result);
+
         } catch (Exception e) {
             return Result.error("获取订单完整详情失败: " + e.getMessage());
         }

@@ -85,16 +85,9 @@ public class CartController {
     /**
      * 添加商品到购物车
      */
-    @PostMapping("/add")
-    public Result<String> addToCart(@RequestBody CartRequest request) {
-        Cart cart = new Cart();
-        cart.setUserId(request.getUserId());
-        cart.setRestaurantId(request.getRestaurantId());
-        cart.setDishId(request.getDishId());
-        cart.setQuantity(request.getQuantity());
-        cart.setPrice(request.getPrice());
-        cart.setNotes(request.getNotes());
-        return cartService.addToCart(cart);
+    @PostMapping("/save")
+    public Result<String> saveCart(@RequestBody List<Cart> cartList) {
+        return cartService.saveCart(cartList);
     }
 
     /**
