@@ -2,12 +2,12 @@ package com.jiumo.weicanjie.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jiumo.weicanjie.common.Result;
-import com.jiumo.weicanjie.entity.Favorite;
+import com.jiumo.weicanjie.entity.UserFavorite;
 
 import java.util.List;
 import java.util.Map;
 
-public interface FavoriteService extends IService<Favorite> {
+public interface UserFavoriteService extends IService<UserFavorite> {
 
     Result<String> addRestaurantFavorite(Long userId, Long restaurantId);
 

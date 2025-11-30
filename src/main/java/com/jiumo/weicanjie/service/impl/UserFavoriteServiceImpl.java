@@ -3,10 +3,10 @@ package com.jiumo.weicanjie.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.common.Result;
-import com.jiumo.weicanjie.entity.Favorite;
+import com.jiumo.weicanjie.entity.UserFavorite;
 import com.jiumo.weicanjie.entity.UserStats;
 import com.jiumo.weicanjie.mapper.FavoriteMapper;
-import com.jiumo.weicanjie.service.FavoriteService;
+import com.jiumo.weicanjie.service.UserFavoriteService;
 import com.jiumo.weicanjie.service.UserStatsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,8 +16,8 @@ import java.util.Map;
 import java.time.LocalDateTime;
 
 @Service
-public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite>
-        implements FavoriteService {
+public class UserFavoriteServiceImpl extends ServiceImpl<FavoriteMapper, UserFavorite>
+        implements UserFavoriteService {
 
     @Autowired
     private FavoriteMapper favoriteMapper;
@@ -33,10 +33,10 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite>
     public Result<String> addRestaurantFavorite(Long userId, Long restaurantId) {
 
         // 判断是否已收藏
-        Favorite exists = favoriteMapper.selectOne(
-                new LambdaQueryWrapper<Favorite>()
-                        .eq(Favorite::getUserId, userId)
-                        .eq(Favorite::getRestaurantId, restaurantId)
+        UserFavorite exists = favoriteMapper.selectOne(
+                new LambdaQueryWrapper<UserFavorite>()
+                        .eq(UserFavorite::getUserId, userId)
+                        .eq(UserFavorite::getRestaurantId, restaurantId)
         );
 
         if (exists != null) {
@@ -44,12 +44,12 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite>
         }
 
         // 新增收藏
-        Favorite favorite = new Favorite();
-        favorite.setUserId(userId);
-        favorite.setRestaurantId(restaurantId);
-        favorite.setCreatedTime(LocalDateTime.now());
+        UserFavorite userFavorite = new UserFavorite();
+        userFavorite.setUserId(userId);
+        userFavorite.setRestaurantId(restaurantId);
+        userFavorite.setCreatedTime(LocalDateTime.now());
 
-        favoriteMapper.insert(favorite);
+        favoriteMapper.insert(userFavorite);
 
         // 更新统计
         updateFavoriteStats(userId);
@@ -65,9 +65,9 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite>
     public Result<String> removeRestaurantFavorite(Long userId, Long restaurantId) {
 
         favoriteMapper.delete(
-                new LambdaQueryWrapper<Favorite>()
-                        .eq(Favorite::getUserId, userId)
-                        .eq(Favorite::getRestaurantId, restaurantId)
+                new LambdaQueryWrapper<UserFavorite>()
+                        .eq(UserFavorite::getUserId, userId)
+                        .eq(UserFavorite::getRestaurantId, restaurantId)
         );
 
         // 更新统计
@@ -82,9 +82,9 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite>
     @Override
     public Integer getRestaurantFavoriteCount(Long userId) {
         Long count = favoriteMapper.selectCount(
-                new LambdaQueryWrapper<Favorite>()
-                        .eq(Favorite::getUserId, userId)
-                        .isNotNull(Favorite::getRestaurantId)
+                new LambdaQueryWrapper<UserFavorite>()
+                        .eq(UserFavorite::getUserId, userId)
+                        .isNotNull(UserFavorite::getRestaurantId)
         );
         return count.intValue();
     }
@@ -111,10 +111,10 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite>
      */
     @Override
     public boolean isRestaurantFavorite(Long userId, Long restaurantId) {
-        Favorite exists = favoriteMapper.selectOne(
-                new LambdaQueryWrapper<Favorite>()
-                        .eq(Favorite::getUserId, userId)
-                        .eq(Favorite::getRestaurantId, restaurantId)
+        UserFavorite exists = favoriteMapper.selectOne(
+                new LambdaQueryWrapper<UserFavorite>()
+                        .eq(UserFavorite::getUserId, userId)
+                        .eq(UserFavorite::getRestaurantId, restaurantId)
         );
         return exists != null;
     }
@@ -125,9 +125,9 @@ public class FavoriteServiceImpl extends ServiceImpl<FavoriteMapper, Favorite>
     @Override
     public List<Map<String, Object>> getFavoriteRestaurantList(Long userId) {
         return favoriteMapper.selectMaps(
-                new LambdaQueryWrapper<Favorite>()
-                        .eq(Favorite::getUserId, userId)
-                        .select(Favorite::getRestaurantId, Favorite::getCreatedTime)
+                new LambdaQueryWrapper<UserFavorite>()
+                        .eq(UserFavorite::getUserId, userId)
+                        .select(UserFavorite::getRestaurantId, UserFavorite::getCreatedTime)
         );
     }
 }

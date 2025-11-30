@@ -4,11 +4,11 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-@TableName("user_favorite")
 @Data
-public class Favorite {
+@TableName("user_history")
+public class UserHistory {
     private Long id;
     private Long userId;
     private Long restaurantId;
-    private LocalDateTime createdTime;
+    private LocalDateTime viewedTime;
 }

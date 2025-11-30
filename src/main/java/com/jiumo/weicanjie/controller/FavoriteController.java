@@ -1,8 +1,8 @@
 package com.jiumo.weicanjie.controller;
 
 import com.jiumo.weicanjie.common.Result;
-import com.jiumo.weicanjie.entity.Favorite;
-import com.jiumo.weicanjie.service.FavoriteService;
+import com.jiumo.weicanjie.entity.UserFavorite;
+import com.jiumo.weicanjie.service.UserFavoriteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,28 +11,28 @@ import org.springframework.web.bind.annotation.*;
 public class FavoriteController {
 
     @Autowired
-    private FavoriteService favoriteService;
+    private UserFavoriteService userFavoriteService;
 
     /**
      * 添加餐厅收藏
      */
     @PostMapping("/add")
-    public Result<String> addFavorite(@RequestBody Favorite req) {
+    public Result<String> addFavorite(@RequestBody UserFavorite req) {
         if (req.getUserId() == null || req.getRestaurantId() == null) {
             return Result.error("缺少 userId 或 restaurantId");
         }
-        return favoriteService.addRestaurantFavorite(req.getUserId(), req.getRestaurantId());
+        return userFavoriteService.addRestaurantFavorite(req.getUserId(), req.getRestaurantId());
     }
 
     /**
      * 取消餐厅收藏
      */
     @PostMapping("/remove")
-    public Result<String> removeFavorite(@RequestBody Favorite req) {
+    public Result<String> removeFavorite(@RequestBody UserFavorite req) {
         if (req.getUserId() == null || req.getRestaurantId() == null) {
             return Result.error("缺少 userId 或 restaurantId");
         }
-        return favoriteService.removeRestaurantFavorite(req.getUserId(), req.getRestaurantId());
+        return userFavoriteService.removeRestaurantFavorite(req.getUserId(), req.getRestaurantId());
     }
 
     /**
@@ -43,7 +43,7 @@ public class FavoriteController {
             @RequestParam Long userId,
             @RequestParam Long restaurantId
     ) {
-        boolean exists = favoriteService.isRestaurantFavorite(userId, restaurantId);
+        boolean exists = userFavoriteService.isRestaurantFavorite(userId, restaurantId);
         return Result.success(exists);
     }
 
@@ -52,6 +52,6 @@ public class FavoriteController {
      */
     @GetMapping("/list")
     public Result<Object> listFavorites(@RequestParam Long userId) {
-        return Result.success(favoriteService.getFavoriteRestaurantList(userId));
+        return Result.success(userFavoriteService.getFavoriteRestaurantList(userId));
     }
 }
