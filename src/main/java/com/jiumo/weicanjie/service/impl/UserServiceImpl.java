@@ -7,6 +7,7 @@ import com.jiumo.weicanjie.entity.User;
 import com.jiumo.weicanjie.entity.LoginRequest.UserInfo;
 import com.jiumo.weicanjie.mapper.UserMapper;
 import com.jiumo.weicanjie.service.UserService;
+import com.jiumo.weicanjie.service.UserStatsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private UserMapper userMapper;
-
+    @Autowired
+    private UserStatsService userStatsService;
     @Override
     @Transactional
     public Result<User> wechatLogin(String code, UserInfo requestUserInfo, String phone) {
@@ -81,7 +83,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
                 boolean saved = save(newUser);
                 if (saved) {
-                    log.info("新用户注册成功: {}, phone: {}", newUser.getNickname(), phone);
+                    userStatsService.createDefaultStats(newUser.getId());
+                    log.info("新用户注册成功并初始化统计数据: {}", newUser.getNickname());
                     return Result.success(newUser);
                 } else {
                     log.error("用户注册失败");
@@ -179,7 +182,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
                 boolean saved = save(newUser);
                 if (saved) {
-                    log.info("新用户注册成功: {}, phone: {}", newUser.getNickname(), phone);
+                    userStatsService.createDefaultStats(newUser.getId());
+                    log.info("新用户注册成功并初始化统计数据: {}", newUser.getNickname());
                     return Result.success(newUser);
                 } else {
                     log.error("用户注册失败");

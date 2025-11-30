@@ -4,7 +4,9 @@ import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.BindPhoneRequest;
 import com.jiumo.weicanjie.entity.LoginRequest;
 import com.jiumo.weicanjie.entity.User;
+import com.jiumo.weicanjie.entity.UserStats;
 import com.jiumo.weicanjie.service.UserService;
+import com.jiumo.weicanjie.service.UserStatsService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserStatsService userStatsService;
 
     /**
      * 微信登录 - 重写为支持手机号注册和登录
@@ -108,16 +113,13 @@ public class UserController {
      * 获取用户统计数据
      */
     @GetMapping("/stats")
-    public Result<Map<String, Object>> getUserStats(@RequestParam Long userId) {
-        System.out.println("获取用户统计数据，userId: " + userId);
-
-        // 模拟用户统计数据
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("favoriteCount", 5);
-        stats.put("orderCount", 12);
-        stats.put("reviewCount", 8);
-
-        return Result.success(stats);
+    public Result<UserStats> getUserStats(@RequestParam Long userId) {
+        UserStats stats = userStatsService.getStats(userId);
+        if (stats != null) {
+            return Result.success(stats);
+        } else {
+            return Result.error("用户统计数据不存在");
+        }
     }
 
     /**

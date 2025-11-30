@@ -1,15 +1,14 @@
 package com.jiumo.weicanjie.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.controller.OrderController;
 import com.jiumo.weicanjie.entity.*;
 import com.jiumo.weicanjie.mapper.OrderItemMapper;
 import com.jiumo.weicanjie.mapper.OrderMapper;
 import com.jiumo.weicanjie.common.Result;
-import com.jiumo.weicanjie.service.CartService;
-import com.jiumo.weicanjie.service.OrderService;
-import com.jiumo.weicanjie.service.RestaurantService;
-import com.jiumo.weicanjie.service.UserService;
+import com.jiumo.weicanjie.mapper.UserStatsMapper;
+import com.jiumo.weicanjie.service.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +37,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Autowired
     private OrderItemMapper orderItemMapper;
 
+    @Autowired
+    private UserStatsService userStatsService;
     @Override
     @Transactional
     public Result<Order> createOrder(OrderRequest.OrderDTO orderDTO, List<OrderRequest.OrderItemRequest> items) {
@@ -101,7 +102,26 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
             // 清空购物车
             cartService.clearUserCart(order.getUserId(), order.getRestaurantId());
+            UserStats stats = userStatsService.getOne(
+                    new LambdaQueryWrapper<UserStats>()
+                            .eq(UserStats::getUserId, order.getUserId())
+            );
 
+// 若用户统计不存在 → 初始化
+            if (stats == null) {
+                stats = new UserStats();
+                stats.setUserId(order.getUserId());
+                stats.setOrderCount(1);
+                stats.setFavoriteCount(0);
+                stats.setReviewCount(0);
+                stats.setTotalSpent(order.getTotalAmount()); // BigDecimal
+                userStatsService.save(stats);
+            } else {
+                // 更新统计
+                stats.setOrderCount(stats.getOrderCount() + 1);
+                stats.setTotalSpent(stats.getTotalSpent().add(order.getTotalAmount()));
+                userStatsService.updateById(stats);
+            }
             return Result.success(order);
 
         } catch (Exception e) {
