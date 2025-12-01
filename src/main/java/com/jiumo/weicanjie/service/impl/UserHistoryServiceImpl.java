@@ -18,7 +18,7 @@ public class UserHistoryServiceImpl
     @Override
     public void recordView(Long userId, Long restaurantId) {
 
-        // 先查是否存在
+        // 1）去重模式：查是否存在
         UserHistory history = this.getOne(
                 new LambdaQueryWrapper<UserHistory>()
                         .eq(UserHistory::getUserId, userId)
@@ -26,28 +26,59 @@ public class UserHistoryServiceImpl
         );
 
         if (history == null) {
-            // 新建记录
+            // 不存在 → 新建
             history = new UserHistory();
             history.setUserId(userId);
             history.setRestaurantId(restaurantId);
             history.setViewedTime(LocalDateTime.now());
-
             this.save(history);
         } else {
-            // 已存在 → 刷新时间
+            // 已存在 → 更新时间
             history.setViewedTime(LocalDateTime.now());
-
             this.updateById(history);
         }
+        cleanOldHistory(userId, 15);
     }
+
 
     @Override
     public List<UserHistory> getRecentHistory(Long userId, int limit) {
-        return this.list(
+        return baseMapper.selectRecentHistory(userId, limit);
+    }
+
+    /**
+     * 保留最新 limit 条历史记录，超出的全部删除
+     */
+    private void cleanOldHistory(Long userId, int limit) {
+
+        // 查询总数量
+        long count = this.count(
                 new LambdaQueryWrapper<UserHistory>()
                         .eq(UserHistory::getUserId, userId)
-                        .orderByDesc(UserHistory::getViewedTime)
-                        .last("LIMIT " + limit)
         );
+
+        if (count <= limit) return; // 不需要清理
+
+        int deleteCount = (int) (count - limit);
+
+        // 找出最旧的 deleteCount 条记录
+        List<UserHistory> oldList = this.list(
+                new LambdaQueryWrapper<UserHistory>()
+                        .eq(UserHistory::getUserId, userId)
+                        .orderByAsc(UserHistory::getViewedTime)
+                        .last("LIMIT " + deleteCount)
+        );
+
+        if (oldList != null && !oldList.isEmpty()) {
+
+            // ⭐ Java 8 写法：Collectors.toList()
+            List<Long> ids = oldList.stream()
+                    .map(UserHistory::getId)
+                    .collect(java.util.stream.Collectors.toList());
+
+            // 删除
+            this.removeByIds(ids);
+        }
     }
+
 }

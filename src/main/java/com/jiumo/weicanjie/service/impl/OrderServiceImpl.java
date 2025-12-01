@@ -326,4 +326,91 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             return Result.error("查询订单失败: " + e.getMessage());
         }
     }
+
+    @Override
+    public Result<List<Map<String, Object>>> getUserOrderList(Long userId) {
+        try {
+            // 1. 获取用户订单（按时间排序）
+            List<Order> orders = orderMapper.selectByUserId(userId);
+            if (orders.isEmpty()) {
+                return Result.success(Collections.emptyList());
+            }
+
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            for (Order order : orders) {
+
+                // 2. 餐厅信息
+                Restaurant restaurant = restaurantService.getById(order.getRestaurantId());
+
+                // 3. 查询订单项（含图片）
+                List<OrderItem> items = orderItemMapper.selectByOrderIdWithDishInfo(order.getId());
+
+                // 3.1 转为前端结构
+                List<Map<String, Object>> itemList = items.stream().map(i -> {
+                    Map<String, Object> itemMap = new HashMap<>();
+                    itemMap.put("name", i.getDishName());
+                    itemMap.put("price", i.getDishPrice());
+                    itemMap.put("quantity", i.getQuantity());
+                    itemMap.put("subtotal", i.getSubtotal());
+
+                    // ⭐★ 订单项图片（你 mapper 里已经 SELECT 了 dish.image_url AS dishImageUrl）
+                    itemMap.put("imageUrl", i.getDishImageUrl());
+
+                    return itemMap;
+                }).collect(Collectors.toList());
+
+                // 4. 计算菜品总数量
+                int totalQuantity = items.stream()
+                        .mapToInt(OrderItem::getQuantity)
+                        .sum();
+
+                // 5. 拼装返回结构
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", order.getId());
+                map.put("restaurantId", order.getRestaurantId());
+
+                // ⭐★ 添加餐厅名称
+                map.put("restaurantName", restaurant != null ? restaurant.getName() : "未知餐厅");
+
+                // ⭐★ 添加餐厅 LOGO
+                map.put("restaurantLogo", restaurant != null ? restaurant.getLogoUrl() : null);
+
+                map.put("status", order.getStatus());
+                map.put("statusText", getStatusText(order.getStatus()));
+
+                map.put("totalAmount", order.getTotalAmount());
+                map.put("totalQuantity", totalQuantity);
+
+                // ⭐ createdTime（前端用于格式化）
+                map.put("createdTime", order.getCreatedTime());
+
+                // 菜品列表
+                map.put("items", itemList);
+
+                result.add(map);
+            }
+
+            return Result.success(result);
+
+        } catch (Exception e) {
+            return Result.error("获取订单列表失败：" + e.getMessage());
+        }
+    }
+
+
+    /**
+     * 订单状态文本转换
+     */
+    private String getStatusText(Integer status) {
+        if (status == null) return "未知状态";
+        switch (status) {
+            case 1: return "待支付";
+            case 2: return "待处理";
+            case 3: return "配送中";
+            case 4: return "已完成";
+            case 5: return "已取消";
+            default: return "未知状态";
+        }
+    }
 }

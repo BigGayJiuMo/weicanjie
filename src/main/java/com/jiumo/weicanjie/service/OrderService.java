@@ -60,4 +60,10 @@ public interface OrderService extends IService<Order> {
      * 根据订单号查询订单
      */
     Result<Order> getOrderByNumber(String orderNumber);
+
+    /**
+     * 获取用户订单列表（含餐厅信息 + 订单项 + 图片等）
+     */
+    Result<List<Map<String, Object>>> getUserOrderList(Long userId);
+
 }

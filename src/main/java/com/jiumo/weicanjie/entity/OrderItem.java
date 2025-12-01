@@ -26,4 +26,11 @@ public class OrderItem {
     // 非数据库字段
     @TableField(exist = false)
     private Dish dish;
+
+    @TableField(exist = false)
+    private String dishImageUrl;
+
+    public String getDishImageUrl() {
+        return dishImageUrl;
+    }
 }

@@ -90,6 +90,14 @@ public class OrderController {
         return orderService.getOrderByNumber(orderNumber);
     }
 
+    /**
+     * 获取用户完整订单列表（带餐厅 + 菜品）
+     */
+    @GetMapping("/list/{userId}")
+    public Result<List<Map<String, Object>>> getUserOrderList(@PathVariable Long userId) {
+        return orderService.getUserOrderList(userId);
+    }
+
     @Data
     public static class BatchOrderRequest {
         private List<SingleOrderRequest> restaurants;
@@ -100,4 +108,5 @@ public class OrderController {
             private List<OrderRequest.OrderItemRequest> items;
         }
     }
+
 }
