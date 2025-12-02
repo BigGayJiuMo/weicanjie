@@ -46,4 +46,8 @@ public class Restaurant {
     // 非数据库字段 - 分类列表
     @TableField(exist = false)
     private List<DishCategory> categories;
+
+    // 非数据库字段 - 商家图片（最多3张）
+    @TableField(exist = false)
+    private List<String> shopImages;
 }

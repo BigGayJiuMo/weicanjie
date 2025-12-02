@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,6 +29,10 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     @Autowired
     private BusinessHoursMapper businessHoursMapper;
 
+    @Autowired
+    private RestaurantImageMapper restaurantImageMapper;
+
+
     @Override
     public Result<List<Restaurant>> getActiveRestaurants() {
         try {
@@ -41,17 +47,17 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     @Override
     public Result<Restaurant> getRestaurantDetail(Long id) {
         try {
-            // 查询餐厅基本信息
+            // 1. 查询餐厅基本信息
             Restaurant restaurant = restaurantMapper.selectById(id);
             if (restaurant == null) {
                 return Result.error("餐厅不存在");
             }
 
-            // 获取营业时间信息
+            // 2. 获取营业时间信息
             List<BusinessHours> businessHours = businessHoursMapper.selectByRestaurantId(id);
             restaurant.setBusinessHours(businessHours);
 
-            // 获取分类及菜品信息
+            // 3. 获取分类及菜品信息
             List<DishCategory> categories = dishCategoryMapper.selectByRestaurantId(id);
             for (DishCategory dishCategory : categories) {
                 List<Dish> dishes = dishMapper.selectByCategoryId(dishCategory.getId());
@@ -60,11 +66,13 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             restaurant.setCategories(categories);
 
             return Result.success(restaurant);
+
         } catch (Exception e) {
             log.error("获取餐厅详情异常", e);
             return Result.error("获取餐厅详情失败");
         }
     }
+
 
     @Override
     public Result<List<Restaurant>> getAllRestaurants() {

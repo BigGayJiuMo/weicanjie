@@ -3,6 +3,8 @@ package com.jiumo.weicanjie.controller;
 
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.Restaurant;
+import com.jiumo.weicanjie.entity.RestaurantImage;
+import com.jiumo.weicanjie.service.RestaurantImageService;
 import com.jiumo.weicanjie.service.RestaurantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +16,9 @@ public class RestaurantController {
 
     @Autowired
     private RestaurantService restaurantService;
+
+    @Autowired
+    private RestaurantImageService restaurantImageService;
 
     /**
      * 获取所有营业中的餐厅
@@ -58,5 +63,15 @@ public class RestaurantController {
     @GetMapping("/listByCategory")
     public Result<List<Restaurant>> listByCategory(@RequestParam Integer categoryId) {
         return restaurantService.getByCategory(categoryId);
+    }
+
+    @PostMapping("/image/add")
+    public Result<String> addRestaurantImage(@RequestBody RestaurantImage img) {
+        try {
+            boolean ok = restaurantImageService.addImage(img);
+            return ok ? Result.success("添加成功") : Result.error("添加失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
     }
 }
