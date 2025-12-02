@@ -67,19 +67,21 @@ public class OrderController {
     }
 
     /**
-     * 取消支付
+     * 取消订单（包括：待支付、待处理）
+     * 前端调用：/order/cancel/{orderId}
      */
     @PostMapping("/cancel/{orderId}")
-    public Result<String> cancelPayment(@PathVariable Long orderId) {
-        return orderService.cancelPayment(orderId);
+    public Result<String> cancelOrder(@PathVariable Long orderId) {
+        return orderService.cancelOrder(orderId);
     }
 
     /**
-     * 取消订单
+     * 如果你以后真要做“取消支付”这个概念，
+     * 可以留一个单独的接口（可选）
      */
-    @PostMapping("/cancelOrder/{orderId}")
-    public Result<String> cancelOrder(@PathVariable Long orderId) {
-        return orderService.cancelOrder(orderId);
+    @PostMapping("/cancelPayment/{orderId}")
+    public Result<String> cancelPayment(@PathVariable Long orderId) {
+        return orderService.cancelPayment(orderId);
     }
 
     /**

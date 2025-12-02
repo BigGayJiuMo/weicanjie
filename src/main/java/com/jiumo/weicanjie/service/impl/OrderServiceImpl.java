@@ -298,12 +298,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 return Result.error("订单不存在");
             }
 
-            // 只有待支付状态的订单可以取消
-            if (order.getStatus() != 1) {
+            Integer status = order.getStatus();
+            // 只有：1-待支付，2-待处理 可以取消
+            if (status == null || (status != 1 && status != 2)) {
                 return Result.error("当前订单状态无法取消");
             }
 
-            int result = orderMapper.updateOrderStatus(orderId, 5); // 已取消
+            // 这里简单处理：直接把订单状态改为 已取消(5)
+            int result = orderMapper.updateOrderStatus(orderId, 5);
             if (result > 0) {
                 return Result.success("订单取消成功");
             } else {
