@@ -31,13 +31,4 @@ public class UserHistory {
     @TableField(exist = false)
     private Integer monthlySales;
 
-    @TableField(exist = false)
-    private BigDecimal minOrderAmount;
-
-    @TableField(exist = false)
-    private BigDecimal deliveryFee;
-
-    @TableField(exist = false)
-    private String deliveryTime;
-
 }

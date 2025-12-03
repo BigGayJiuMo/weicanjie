@@ -10,9 +10,14 @@ import java.util.List;
 @Mapper
 public interface RestaurantImageMapper extends BaseMapper<RestaurantImage> {
 
-    @Select("SELECT * FROM restaurant_images " +
-            "WHERE restaurant_id = #{restaurantId} " +
-            "ORDER BY sort_order ASC, id ASC " +
-            "LIMIT 3")
-    List<RestaurantImage> selectTop3ByRestaurantId(Long restaurantId);
+    /**
+     * 根据餐厅 ID 获取所有图片（只返回 URL）
+     */
+    @Select(
+            "SELECT image_url " +
+                    "FROM restaurant_images " +
+                    "WHERE restaurant_id = #{restaurantId} " +
+                    "ORDER BY sort_order ASC, id ASC"
+    )
+    List<String> selectImagesByRestaurantId(Long restaurantId);
 }

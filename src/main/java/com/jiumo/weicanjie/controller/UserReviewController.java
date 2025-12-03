@@ -14,20 +14,23 @@ public class UserReviewController {
     @Autowired
     private UserReviewService userReviewService;
 
+    @Autowired
     private UserReviewMapper userReviewMapper;
+
     @PostMapping("/add")
     public Result<?> addReview(@RequestBody UserReview userReview) {
-        // 假设已处理好用户提交的评价数据
         try {
-            // 处理评价提交
-            // 保存评价数据
+            if (userReview.getUserId() == null || userReview.getRestaurantId() == null) {
+                return Result.error("参数不完整");
+            }
+
             userReviewMapper.insert(userReview);
 
-            // 更新餐厅的评分
             userReviewService.updateRestaurantRating(userReview.getRestaurantId());
 
             return Result.success("评价提交成功");
         } catch (Exception e) {
+            e.printStackTrace();
             return Result.error("评价提交失败");
         }
     }
@@ -37,5 +40,9 @@ public class UserReviewController {
         return Result.ok(userReviewService.getReviewsByRestaurantId(restaurantId));
     }
 
+    @GetMapping("/userReviews")
+    public Result<?> getByUser(@RequestParam Long userId) {
+        return Result.ok(userReviewMapper.selectByUserId(userId));
+    }
 
 }

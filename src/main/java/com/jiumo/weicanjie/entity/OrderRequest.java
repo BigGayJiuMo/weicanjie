@@ -13,9 +13,9 @@ public class OrderRequest {
     public static class OrderDTO {
         private Long userId;
         private Long restaurantId;
+
         private BigDecimal totalAmount;
         private BigDecimal packingFee;
-        private BigDecimal deliveryFee;
     }
 
     @Data

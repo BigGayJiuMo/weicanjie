@@ -21,4 +21,6 @@ public interface UserReviewMapper extends BaseMapper<UserReview> {
             "ORDER BY r.created_time DESC")
     List<Map<String, Object>> selectReviewsByRestaurantId(Long restaurantId);
 
+    @Select("SELECT * FROM user_review WHERE user_id = #{userId}")
+    List<UserReview> selectByUserId(Long userId);
 }

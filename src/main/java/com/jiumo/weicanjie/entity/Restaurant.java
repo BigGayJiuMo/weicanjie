@@ -19,13 +19,9 @@ public class Restaurant {
     private String address;
     private Integer status;
 
-    // 新增字段
     private Double avgRating;
     private Integer monthlySales;
-    private Double minOrderAmount;
-    private Double deliveryFee;
     private Double packingFee;
-    private String deliveryTime;
     private Integer businessStatus;
 
     @TableField("category_type")
@@ -43,11 +39,11 @@ public class Restaurant {
     @TableField(exist = false)
     private List<BusinessHours> businessHours;
 
-    // 非数据库字段 - 分类列表
+    // 非数据库字段 - 菜品分类及菜品
     @TableField(exist = false)
     private List<DishCategory> categories;
 
-    // 非数据库字段 - 商家图片（最多3张）
+    // 非数据库字段 - 商家展示图片
     @TableField(exist = false)
     private List<String> shopImages;
 }

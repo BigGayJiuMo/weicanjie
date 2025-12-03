@@ -16,10 +16,7 @@
             r.logo_url AS imageUrl,
             r.description AS description,
             r.avg_rating AS avgRating,
-            r.monthly_sales AS monthlySales,
-            r.min_order_amount AS minOrderAmount,
-            r.delivery_fee AS deliveryFee,
-            r.delivery_time AS deliveryTime
+            r.monthly_sales AS monthlySales
 
         FROM user_history h
                  LEFT JOIN restaurant r ON h.restaurant_id = r.id
@@ -27,6 +24,5 @@
         ORDER BY h.viewed_time DESC
             LIMIT #{limit}
     </select>
-
 
 </mapper>

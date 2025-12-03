@@ -55,12 +55,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             order.setPayStatus(0); // 未支付
             order.setCreatedTime(LocalDateTime.now());
             order.setUpdatedTime(LocalDateTime.now());
-            // 配送费
-            if (orderDTO.getDeliveryFee() == null) {
-                order.setDeliveryFee(BigDecimal.ZERO);
-            } else {
-                order.setDeliveryFee(orderDTO.getDeliveryFee());
-            }
 
             // 打包费
             if (orderDTO.getPackingFee() == null) {
@@ -69,17 +63,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 order.setPackingFee(orderDTO.getPackingFee());
             }
 
-            // 总金额（如果前端传了就写入）
+// 总金额（菜品小计 + 打包费）
             if (orderDTO.getTotalAmount() == null) {
-                // 计算总金额：菜品小计 + 配送费 + 打包费
                 BigDecimal itemsTotal = items.stream()
                         .map(i -> i.getDishPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                BigDecimal total = itemsTotal
-                        .add(order.getDeliveryFee())
-                        .add(order.getPackingFee());
-
+                BigDecimal total = itemsTotal.add(order.getPackingFee());
                 order.setTotalAmount(total);
             } else {
                 order.setTotalAmount(orderDTO.getTotalAmount());
@@ -206,7 +196,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             result.put("restaurant", restaurant);
             result.put("orderItems", orderItems);
             result.put("subTotal", subTotal);
-            result.put("deliveryFee", order.getDeliveryFee());
             result.put("packingFee", order.getPackingFee());
             result.put("totalAmount", order.getTotalAmount());
 
@@ -409,9 +398,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         switch (status) {
             case 1: return "待支付";
             case 2: return "待处理";
-            case 3: return "配送中";
-            case 4: return "已完成";
-            case 5: return "已取消";
+            case 3: return "已完成";
+            case 4: return "已取消";
             default: return "未知状态";
         }
     }

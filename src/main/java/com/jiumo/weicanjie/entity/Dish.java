@@ -22,6 +22,11 @@ public class Dish {
     private Integer status;
     private Integer stock;
 
+    private String ingredients;
+    private String taste;
+    private String weight;
+    private Integer monthlySales;
+
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdTime;

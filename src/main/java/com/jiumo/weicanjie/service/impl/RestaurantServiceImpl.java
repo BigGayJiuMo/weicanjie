@@ -1,4 +1,3 @@
-// RestaurantServiceImpl.java
 package com.jiumo.weicanjie.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,13 +8,13 @@ import com.jiumo.weicanjie.service.RestaurantService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaurant> implements RestaurantService {
+public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaurant>
+        implements RestaurantService {
 
     @Autowired
     private RestaurantMapper restaurantMapper;
@@ -53,17 +52,21 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
                 return Result.error("餐厅不存在");
             }
 
-            // 2. 获取营业时间信息
+            // 2. 营业时间
             List<BusinessHours> businessHours = businessHoursMapper.selectByRestaurantId(id);
             restaurant.setBusinessHours(businessHours);
 
-            // 3. 获取分类及菜品信息
+            // 3. 菜品分类与菜品
             List<DishCategory> categories = dishCategoryMapper.selectByRestaurantId(id);
-            for (DishCategory dishCategory : categories) {
-                List<Dish> dishes = dishMapper.selectByCategoryId(dishCategory.getId());
-                dishCategory.setDishes(dishes);
+            for (DishCategory cat : categories) {
+                List<Dish> dishes = dishMapper.selectByCategoryId(cat.getId());
+                cat.setDishes(dishes);
             }
             restaurant.setCategories(categories);
+
+            // 4. 商家图片
+            List<String> images = restaurantImageMapper.selectImagesByRestaurantId(id);
+            restaurant.setShopImages(images);
 
             return Result.success(restaurant);
 
@@ -73,11 +76,9 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         }
     }
 
-
     @Override
     public Result<List<Restaurant>> getAllRestaurants() {
         try {
-            // 使用新的查询方法获取所有餐厅
             List<Restaurant> restaurants = restaurantMapper.selectAllRestaurants();
             return Result.success(restaurants);
         } catch (Exception e) {

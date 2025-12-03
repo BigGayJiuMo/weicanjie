@@ -27,23 +27,29 @@ public class UserReviewServiceImpl implements UserReviewService {
 
         for (Map<String, Object> item : list) {
 
-            // JSON 图片 → List<String>
+            // ⭐JSON 解析
             String imgJson = (String) item.get("image_urls");
             if (imgJson != null && !imgJson.isEmpty()) {
-                // 使用 FastJSON 的 parseArray 方法
                 item.put("images", JSONArray.parseArray(imgJson, String.class));
             } else {
                 item.put("images", Collections.emptyList());
             }
 
-            // 默认头像
-            if (item.get("avatar") == null) {
+            // ⭐匿名用户处理
+            Object anon = item.get("is_anonymous");
+            if (anon != null && ((Integer) anon) == 1) {
+                item.put("username", "匿名用户");
                 item.put("avatar", "/images/default-avatar.png");
+            } else {
+                if (item.get("avatar") == null) {
+                    item.put("avatar", "/images/default-avatar.png");
+                }
             }
         }
 
         return list;
     }
+
     public void updateRestaurantRating(Long restaurantId) {
         // 获取所有评价
         List<Map<String, Object>> reviews = userReviewMapper.selectReviewsByRestaurantId(restaurantId);
