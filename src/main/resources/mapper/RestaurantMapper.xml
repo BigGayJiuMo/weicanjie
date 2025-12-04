@@ -6,43 +6,51 @@
 <mapper namespace="com.jiumo.weicanjie.mapper.RestaurantMapper">
 
     <select id="searchRestaurant" resultType="com.jiumo.weicanjie.entity.Restaurant">
-        SELECT
-        id,
-        name,
-        description,
-        contact_phone,
-        logo_url,
-        address,
-        status,
-        category_type,
-        avg_rating,
-        monthly_sales,
-        packing_fee,
-        business_status,
-        created_time,
-        updated_time
-        FROM restaurant
+        SELECT DISTINCT
+        r.id,
+        r.name,
+        r.description,
+        r.contact_phone,
+        r.logo_url,
+        r.address,
+        r.status,
+        r.category_type,
+        r.avg_rating,
+        r.monthly_sales,
+        r.packing_fee,
+        r.business_status,
+        r.created_time,
+        r.updated_time
+        FROM restaurant r
+        LEFT JOIN dish d ON r.id = d.restaurant_id
         <where>
             <if test="keyword != null and keyword != ''">
-                (name LIKE CONCAT('%', #{keyword}, '%')
-                OR description LIKE CONCAT('%', #{keyword}, '%'))
+                (
+                r.name LIKE CONCAT('%', #{keyword}, '%')
+                OR r.description LIKE CONCAT('%', #{keyword}, '%')
+                OR d.name LIKE CONCAT('%', #{keyword}, '%')
+                )
             </if>
         </where>
-        ORDER BY id
+        ORDER BY r.monthly_sales DESC
     </select>
 
+
     <select id="suggestRestaurant" resultType="com.jiumo.weicanjie.entity.Restaurant">
-        SELECT
-        id,
-        name
-        FROM restaurant
+        SELECT DISTINCT
+        r.id,
+        r.name
+        FROM restaurant r
+        LEFT JOIN dish d ON r.id = d.restaurant_id
         <where>
             <if test="keyword != null and keyword != ''">
-                name LIKE CONCAT('%', #{keyword}, '%')
-                OR description LIKE CONCAT('%', #{keyword}, '%')
+                (
+                r.name LIKE CONCAT('%', #{keyword}, '%')
+                OR d.name LIKE CONCAT('%', #{keyword}, '%')
+                )
             </if>
         </where>
-        ORDER BY monthly_sales DESC
+        ORDER BY r.monthly_sales DESC
         LIMIT 8
     </select>
 </mapper>
