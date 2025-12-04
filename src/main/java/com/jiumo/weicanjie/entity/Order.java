@@ -22,6 +22,7 @@ public class Order {
     private Integer status; // 1=待支付 2=待处理 3=已完成 4=已取消
     private Integer payStatus; // 0-未支付，1-已支付，2-支付失败，3-已退款
     private String transactionId;
+    private Integer eatType; // 1=堂食 2=外带
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime payTime;

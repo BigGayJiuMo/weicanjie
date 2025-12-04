@@ -23,11 +23,12 @@ public class UserReviewServiceImpl implements UserReviewService {
 
     @Override
     public List<Map<String, Object>> getReviewsByRestaurantId(Long restaurantId) {
+
         List<Map<String, Object>> list = userReviewMapper.selectReviewsByRestaurantId(restaurantId);
 
         for (Map<String, Object> item : list) {
 
-            // ⭐JSON 解析
+            // ⭐ 处理图片 JSON
             String imgJson = (String) item.get("image_urls");
             if (imgJson != null && !imgJson.isEmpty()) {
                 item.put("images", JSONArray.parseArray(imgJson, String.class));
@@ -35,7 +36,7 @@ public class UserReviewServiceImpl implements UserReviewService {
                 item.put("images", Collections.emptyList());
             }
 
-            // ⭐匿名用户处理
+            // ⭐ 匿名用户处理
             Object anon = item.get("is_anonymous");
             if (anon != null && ((Integer) anon) == 1) {
                 item.put("username", "匿名用户");
@@ -45,51 +46,52 @@ public class UserReviewServiceImpl implements UserReviewService {
                     item.put("avatar", "/images/default-avatar.png");
                 }
             }
+
+            // ⭐ 新增：餐厅名称 & logo 输出给前端
+            item.put("restaurantName", item.get("restaurant_name"));
+            item.put("restaurantLogo", item.get("restaurant_logo"));
         }
 
         return list;
     }
 
+
+    @Override
     public void updateRestaurantRating(Long restaurantId) {
-        // 获取所有评价
+
         List<Map<String, Object>> reviews = userReviewMapper.selectReviewsByRestaurantId(restaurantId);
 
         if (!reviews.isEmpty()) {
-            // 计算平均评分
             double avgRating = reviews.stream()
                     .mapToInt(review -> (Integer) review.get("rating"))
                     .average()
                     .orElse(0);
 
-            // 更新餐厅的 avgRating
             Restaurant restaurant = new Restaurant();
             restaurant.setId(restaurantId);
-            restaurant.setAvgRating(avgRating); // 设置新的评分
+            restaurant.setAvgRating(avgRating);
             restaurantMapper.updateById(restaurant);
         } else {
-            // 如果没有评论，设置 avgRating 为 null
             Restaurant restaurant = new Restaurant();
             restaurant.setId(restaurantId);
-            restaurant.setAvgRating(null); // 设置为 null
+            restaurant.setAvgRating(null);
             restaurantMapper.updateById(restaurant);
         }
     }
+
 
     @Override
     public double calculateAvgRating(Long restaurantId) {
+
         List<Map<String, Object>> reviews = userReviewMapper.selectReviewsByRestaurantId(restaurantId);
 
         if (reviews.isEmpty()) {
-            return -1; // 如果没有评价，返回-1表示没有评分
+            return -1;
         }
 
-        // 计算评分的平均值
-        double avgRating = reviews.stream()
+        return reviews.stream()
                 .mapToInt(review -> (Integer) review.get("rating"))
                 .average()
                 .orElse(0);
-
-        return avgRating;
     }
 }
-

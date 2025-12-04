@@ -24,4 +24,14 @@ public class UserStatsServiceImpl extends ServiceImpl<UserStatsMapper, UserStats
         stats.setUserId(userId);
         statsMapper.insert(stats);
     }
+
+    @Override
+    public void incrementReviewCount(Long userId) {
+        statsMapper.incrementReviewCount(userId);
+    }
+
+    @Override
+    public void decrementReviewCount(Long userId) {
+        statsMapper.decrementReviewCount(userId);
+    }
 }

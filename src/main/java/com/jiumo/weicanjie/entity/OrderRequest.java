@@ -16,6 +16,8 @@ public class OrderRequest {
 
         private BigDecimal totalAmount;
         private BigDecimal packingFee;
+
+        private Integer eatType;
     }
 
     @Data

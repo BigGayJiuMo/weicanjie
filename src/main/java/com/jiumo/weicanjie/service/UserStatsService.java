@@ -8,4 +8,8 @@ public interface UserStatsService extends IService<UserStats> {
     UserStats getStats(Long userId);
 
     void createDefaultStats(Long userId);
+
+    void incrementReviewCount(Long userId);
+
+    void decrementReviewCount(Long userId);
 }
