@@ -23,9 +23,10 @@ public class UserReview {
 
     private String content;
 
-    @TableField("image_urls") // ⭐映射 JSON 字段
+    @TableField("image_urls")
     private String imageUrls;
 
-    @TableField("is_anonymous") // ⭐数据库字段是 is_anonymous
+    // ⭐ 小程序 Boolean -> 后端 Integer（1/0）
+    @TableField("is_anonymous")
     private Integer isAnon;
 }
