@@ -66,4 +66,10 @@ public interface OrderService extends IService<Order> {
      */
     Result<List<Map<String, Object>>> getUserOrderList(Long userId);
 
+    /**
+     * 搜索订单（按餐厅/菜品）
+     */
+    Result<List<Map<String, Object>>> searchOrders(Long userId, String keyword);
+
+
 }

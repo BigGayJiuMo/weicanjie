@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jiumo.weicanjie.mapper.RestaurantMapper">
+
+    <select id="searchRestaurant" resultType="com.jiumo.weicanjie.entity.Restaurant">
+        SELECT
+        id,
+        name,
+        description,
+        contact_phone,
+        logo_url,
+        address,
+        status,
+        category_type,
+        avg_rating,
+        monthly_sales,
+        packing_fee,
+        business_status,
+        created_time,
+        updated_time
+        FROM restaurant
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (name LIKE CONCAT('%', #{keyword}, '%')
+                OR description LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY id
+    </select>
+
+    <select id="suggestRestaurant" resultType="com.jiumo.weicanjie.entity.Restaurant">
+        SELECT
+        id,
+        name
+        FROM restaurant
+        <where>
+            <if test="keyword != null and keyword != ''">
+                name LIKE CONCAT('%', #{keyword}, '%')
+                OR description LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY monthly_sales DESC
+        LIMIT 8
+    </select>
+</mapper>

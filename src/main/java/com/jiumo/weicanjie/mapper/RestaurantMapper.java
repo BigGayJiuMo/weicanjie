@@ -3,6 +3,7 @@ package com.jiumo.weicanjie.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jiumo.weicanjie.entity.Restaurant;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -49,4 +50,15 @@ public interface RestaurantMapper extends BaseMapper<Restaurant> {
                     "ORDER BY id"
     )
     List<Restaurant> selectByCategory(Integer categoryId);
+
+
+    /**
+     * 搜索餐厅（按名称 / 描述）
+     */
+    List<Restaurant> searchRestaurant(@Param("keyword") String keyword);
+
+    /**
+     * 实时联想搜索（返回 id + name）
+     */
+    List<Restaurant> suggestRestaurant(@Param("keyword") String keyword);
 }

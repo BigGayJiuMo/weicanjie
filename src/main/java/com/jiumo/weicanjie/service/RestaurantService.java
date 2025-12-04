@@ -32,4 +32,14 @@ public interface RestaurantService extends IService<Restaurant> {
      * @return 餐厅分类结果
      */
     Result<List<Restaurant>> getByCategory(Integer categoryId);
+
+    /**
+     * 搜索餐厅（按名称 / 描述）
+     */
+    Result<List<Restaurant>> searchRestaurant(String keyword);
+
+    /**
+     * 实时联想（搜索提示）
+     */
+    Result<List<Restaurant>> suggest(String keyword);
 }

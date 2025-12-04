@@ -111,4 +111,14 @@ public class OrderController {
         }
     }
 
+    /**
+     * 搜索订单（按餐厅/菜品）
+     */
+    @GetMapping("/search")
+    public Result<List<Map<String, Object>>> searchOrders(
+            @RequestParam Long userId,
+            @RequestParam String keyword) {
+        return orderService.searchOrders(userId, keyword);
+    }
+
 }

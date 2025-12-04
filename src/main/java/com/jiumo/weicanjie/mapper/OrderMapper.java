@@ -3,10 +3,12 @@ package com.jiumo.weicanjie.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jiumo.weicanjie.entity.Order;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrderMapper extends BaseMapper<Order> {
@@ -24,4 +26,8 @@ public interface OrderMapper extends BaseMapper<Order> {
             "transaction_id = #{transactionId}, pay_time = NOW(), updated_time = NOW() " +
             "WHERE id = #{orderId}")
     int updateOrderPaymentStatus(Long orderId, Integer status, Integer payStatus, String transactionId);
+
+
+    List<Map<String, Object>> searchOrders(@Param("userId") Long userId,
+                                           @Param("keyword") String keyword);
 }

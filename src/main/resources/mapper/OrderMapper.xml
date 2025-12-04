@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jiumo.weicanjie.mapper.OrderMapper">
+
+    <!-- 搜索订单（返回每个订单的基本信息 + 所有订单项） -->
+    <select id="searchOrders" resultType="java.util.Map">
+        SELECT
+            o.id AS orderId,
+            o.restaurant_id AS restaurantId,
+            r.name AS restaurantName,
+            r.logo_url AS restaurantLogo,
+            o.total_amount AS totalAmount,
+            o.status AS status,
+            o.created_time AS createdTime
+        FROM orders o
+                 JOIN restaurant r ON o.restaurant_id = r.id
+        WHERE o.user_id = #{userId}
+          AND (
+            r.name LIKE CONCAT('%', #{keyword}, '%')
+                OR EXISTS (
+                SELECT 1 FROM order_items oi
+                WHERE oi.order_id = o.id
+                  AND oi.dish_name LIKE CONCAT('%', #{keyword}, '%')
+            )
+            )
+        ORDER BY o.created_time DESC
+    </select>
+
+
+</mapper>

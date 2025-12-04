@@ -74,4 +74,20 @@ public class RestaurantController {
             return Result.error(e.getMessage());
         }
     }
+
+    /**
+     * 搜索餐厅（按名称 / 描述）
+     */
+    @GetMapping("/search")
+    public Result<List<Restaurant>> searchRestaurant(@RequestParam String keyword) {
+        return restaurantService.searchRestaurant(keyword);
+    }
+
+    /**
+     * 实时联想搜索（只返回 id + name）
+     */
+    @GetMapping("/suggest")
+    public Result<List<Restaurant>> suggest(@RequestParam String keyword) {
+        return restaurantService.suggest(keyword);
+    }
 }

@@ -13,6 +13,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -348,4 +350,30 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             default: return "未知状态";
         }
     }
+
+    @Override
+    public Result<List<Map<String, Object>>> searchOrders(Long userId, String keyword) {
+
+        List<Map<String, Object>> baseList = orderMapper.searchOrders(userId, keyword);
+
+        for (Map<String, Object> map : baseList) {
+            Long orderId = ((Number) map.get("orderId")).longValue();
+
+            // 查完整菜品
+            List<OrderItem> items = orderItemMapper.selectByOrderIdWithDishInfo(orderId);
+
+            map.put("items", items);
+
+            // 对标前端字段
+            int totalQuantity = items.stream()
+                    .mapToInt(OrderItem::getQuantity)
+                    .sum();
+
+            map.put("totalQuantity", totalQuantity);
+            map.put("statusText", getStatusText((Integer) map.get("status")));
+        }
+
+        return Result.success(baseList);
+    }
+
 }

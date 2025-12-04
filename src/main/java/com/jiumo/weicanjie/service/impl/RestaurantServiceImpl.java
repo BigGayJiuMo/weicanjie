@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -97,4 +98,37 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             return Result.error("查询失败");
         }
     }
+
+    @Override
+    public Result<List<Restaurant>> searchRestaurant(String keyword) {
+        try {
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return Result.success(Collections.emptyList());
+            }
+
+            List<Restaurant> list = restaurantMapper.searchRestaurant(keyword);
+            return Result.success(list);
+
+        } catch (Exception e) {
+            return Result.error("搜索餐厅失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<List<Restaurant>> suggest(String keyword) {
+        try {
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return Result.success(Collections.emptyList());
+            }
+
+            // 只返回名称，不返回完整详情
+            List<Restaurant> list = restaurantMapper.suggestRestaurant(keyword);
+
+            return Result.success(list);
+
+        } catch (Exception e) {
+            return Result.error("联想搜索失败: " + e.getMessage());
+        }
+    }
+
 }
