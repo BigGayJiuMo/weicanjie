@@ -39,9 +39,15 @@ public class AdminRestaurantController {
      */
     @PostMapping("/add")
     public Result<?> add(@RequestBody Restaurant restaurant) {
-        restaurant.setId(null);
-        boolean ok = restaurantService.save(restaurant);
-        return ok ? Result.success("创建成功") : Result.error("创建失败");
+
+        // categoryType 必须有默认值
+        if (restaurant.getCategoryType() == null) {
+            restaurant.setCategoryType(2); // 默认家常菜
+        }
+
+        restaurantService.save(restaurant);
+
+        return Result.success(restaurant.getId()); //  返回新餐厅 ID
     }
 
     /**

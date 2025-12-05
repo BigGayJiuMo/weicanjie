@@ -45,6 +45,9 @@ public class UploadController {
                     break;
 
                 case "logo":
+                    if (restaurantId == null) {
+                        return Result.error("restaurantId 不能为空");
+                    }
                     folder = "restaurant/" + restaurantId + "/logo/";
                     break;
 
