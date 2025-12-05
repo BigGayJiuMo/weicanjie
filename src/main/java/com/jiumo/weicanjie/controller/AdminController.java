@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/admin")
 public class AdminController {
 
     @Autowired
@@ -18,6 +18,9 @@ public class AdminController {
 
     @PostMapping("/login")
     public Result<?> login(@RequestBody AdminLoginDTO dto) {
+        System.out.println("DTO = " + dto);
+        System.out.println("username=" + dto.getUsername());
+        System.out.println("password=" + dto.getPassword());
         return adminService.login(dto.getUsername(), dto.getPassword());
     }
 }

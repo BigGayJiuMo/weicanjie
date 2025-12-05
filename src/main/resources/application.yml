@@ -13,11 +13,6 @@ spring:
   mvc:
     path match:
       matching-strategy: ant_path_matcher
-# 允许跨域
-  cors:
-    allowed-origins: "*"
-    allowed-methods: "*"
-    allowed-headers: "*"
   # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
