@@ -2,6 +2,7 @@ package com.jiumo.weicanjie.controller;
 
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.dto.AdminLoginDTO;
+import com.jiumo.weicanjie.entity.AdminUser;
 import com.jiumo.weicanjie.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,4 +24,10 @@ public class AdminController {
         System.out.println("password=" + dto.getPassword());
         return adminService.login(dto.getUsername(), dto.getPassword());
     }
+
+    @PostMapping("/createMerchant")
+    public Result<?> createMerchant(@RequestBody AdminUser user) {
+        return adminService.createMerchant(user);
+    }
+
 }

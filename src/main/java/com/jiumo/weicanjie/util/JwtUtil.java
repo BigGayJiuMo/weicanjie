@@ -1,5 +1,6 @@
 package com.jiumo.weicanjie.util;
 
+import com.jiumo.weicanjie.entity.AdminUser;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -20,9 +21,11 @@ public class JwtUtil {
     }
 
     /** 生成 Token */
-    public String createToken(Long uid) {
+    public String createToken(AdminUser user) {
         return Jwts.builder()
-                .setSubject(String.valueOf(uid))
+                .claim("uid", user.getId())
+                .claim("role", user.getRole())
+                .claim("restaurantId", user.getRestaurantId())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRE))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
