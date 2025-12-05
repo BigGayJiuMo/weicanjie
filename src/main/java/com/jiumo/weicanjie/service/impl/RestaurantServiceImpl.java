@@ -1,5 +1,7 @@
 package com.jiumo.weicanjie.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.*;
@@ -8,6 +10,7 @@ import com.jiumo.weicanjie.service.RestaurantService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +35,11 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     @Autowired
     private RestaurantImageMapper restaurantImageMapper;
 
+    @Autowired
+    private RestaurantBusinessHoursMapper restaurantBusinessHoursMapper;
+
+    @Autowired
+    private UserReviewMapper userReviewMapper;
 
     @Override
     public Result<List<Restaurant>> getActiveRestaurants() {
@@ -130,5 +138,68 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             return Result.error("联想搜索失败: " + e.getMessage());
         }
     }
+
+    @Override
+    public Result<?> getPage(Integer pageNum, Integer pageSize, String keyword) {
+
+        Page<Restaurant> page = new Page<>(pageNum, pageSize);
+
+        QueryWrapper<Restaurant> qw = new QueryWrapper<>();
+
+        if (keyword != null && !keyword.isEmpty()) {
+            qw.like("name", keyword);
+        }
+
+        qw.orderByDesc("id");
+
+        Page<Restaurant> result = restaurantMapper.selectPage(page, qw);
+
+        return Result.success(result);
+    }
+
+
+    @Override
+    @Transactional
+    public Result<?> deleteRestaurant(Long id) {
+
+        // 0. 删除评价
+        userReviewMapper.delete(
+                new QueryWrapper<UserReview>().eq("restaurant_id", id)
+        );
+
+        // 1. 查分类
+        List<DishCategory> categories = dishCategoryMapper.selectList(
+                new QueryWrapper<DishCategory>().eq("restaurant_id", id)
+        );
+
+        // 2. 删菜品
+        for (DishCategory category : categories) {
+            dishMapper.delete(
+                    new QueryWrapper<Dish>().eq("category_id", category.getId())
+            );
+        }
+
+        // 3. 删分类
+        dishCategoryMapper.delete(
+                new QueryWrapper<DishCategory>().eq("restaurant_id", id)
+        );
+
+        // 4. 删展示图片
+        restaurantImageMapper.delete(
+                new QueryWrapper<RestaurantImage>().eq("restaurant_id", id)
+        );
+
+        // 5. 删营业时间
+        restaurantBusinessHoursMapper.delete(
+                new QueryWrapper<RestaurantBusinessHours>().eq("restaurant_id", id)
+        );
+
+        // 6. 删除餐厅
+        this.removeById(id);
+
+        return Result.success("删除成功");
+    }
+
+
 
 }

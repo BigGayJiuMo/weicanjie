@@ -8,9 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @RestController
 @RequestMapping("/upload")
 public class UploadController {
@@ -25,37 +22,52 @@ public class UploadController {
     private String endpoint;
 
     /**
-     * type → folder 对照表
-     * 可自由扩展
-     */
-    private static final Map<String, String> FOLDER_MAP = new HashMap<>();
-    static {
-        FOLDER_MAP.put("avatar", "avatar/");
-        FOLDER_MAP.put("review", "review/");
-        FOLDER_MAP.put("restaurant", "restaurant/");
-        FOLDER_MAP.put("dish", "dish/");
-        FOLDER_MAP.put("category", "category/");
-        FOLDER_MAP.put("admin", "admin/");
-        FOLDER_MAP.put("banner", "banner/");
-    }
-
-    /**
-     * 上传图片
-     * @param type 前端传入的类型，用于决定目录
+     * 上传图片：支持餐厅分类目录与用户头像目录
      */
     @PostMapping("/image")
     public Result<?> upload(
             @RequestPart("file") MultipartFile file,
-            @RequestParam(defaultValue = "other") String type
+            @RequestParam String type,                  // avatar / review / logo / hall / store / food
+            @RequestParam(required = false) Long restaurantId,
+            @RequestParam(required = false) Long userId
     ) {
         try {
-            // 1. 判断目录
-            String folder = FOLDER_MAP.getOrDefault(type, "other/");
+            String folder = "";
 
-            // 2. 生成唯一文件名
+            switch (type) {
+
+                case "avatar":
+                    folder = "avatar/" + (userId == null ? "unknown" : userId) + "/";
+                    break;
+
+                case "review":
+                    folder = "restaurant/" + restaurantId + "/review/";
+                    break;
+
+                case "logo":
+                    folder = "restaurant/" + restaurantId + "/logo/";
+                    break;
+
+                case "store":
+                    folder = "restaurant/" + restaurantId + "/store/";
+                    break;
+
+                case "hall":
+                    folder = "restaurant/" + restaurantId + "/hall/";
+                    break;
+
+                case "food":
+                    folder = "restaurant/" + restaurantId + "/food/";
+                    break;
+
+                default:
+                    folder = "other/";
+            }
+
+            // 构建唯一文件名
             String fileName = folder + System.currentTimeMillis() + "-" + file.getOriginalFilename();
 
-            // 3. 上传到 MinIO
+            // 上传 Minio
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
@@ -65,14 +77,14 @@ public class UploadController {
                             .build()
             );
 
-            // 4. 拼接可访问 URL
+            // 对公网可访问
             String url = endpoint + "/" + bucketName + "/" + fileName;
 
             return Result.ok(url);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.error("上传失败：" + e.getMessage());
+            return Result.error("上传失败: " + e.getMessage());
         }
     }
 }

@@ -1,9 +1,9 @@
-package com.jiumo.weicanjie.controller;
+package com.jiumo.weicanjie.controller.admin;
 
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.dto.AdminLoginDTO;
 import com.jiumo.weicanjie.entity.AdminUser;
-import com.jiumo.weicanjie.service.AdminService;
+import com.jiumo.weicanjie.service.AdminUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,19 +15,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
 
     @Autowired
-    private AdminService adminService;
+    private AdminUserService adminUserService;
 
     @PostMapping("/login")
     public Result<?> login(@RequestBody AdminLoginDTO dto) {
         System.out.println("DTO = " + dto);
         System.out.println("username=" + dto.getUsername());
         System.out.println("password=" + dto.getPassword());
-        return adminService.login(dto.getUsername(), dto.getPassword());
+        return adminUserService.login(dto.getUsername(), dto.getPassword());
     }
 
     @PostMapping("/createMerchant")
     public Result<?> createMerchant(@RequestBody AdminUser user) {
-        return adminService.createMerchant(user);
+        return adminUserService.createMerchant(user);
     }
 
 }

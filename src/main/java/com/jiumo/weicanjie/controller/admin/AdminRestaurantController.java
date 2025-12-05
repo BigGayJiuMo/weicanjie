@@ -10,6 +10,8 @@ import com.jiumo.weicanjie.service.RestaurantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/admin/restaurant")
 public class AdminRestaurantController {
@@ -25,20 +27,11 @@ public class AdminRestaurantController {
      */
     @GetMapping("/page")
     public Result<?> page(
-            @RequestParam long pageNum,
-            @RequestParam long pageSize,
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
             @RequestParam(required = false) String keyword
     ) {
-        Page<Restaurant> page = new Page<>(pageNum, pageSize);
-
-        QueryWrapper<Restaurant> qw = new QueryWrapper<>();
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            qw.like("name", keyword).or().like("description", keyword);
-        }
-
-        qw.orderByDesc("id");
-
-        return Result.success(restaurantService.page(page, qw));
+        return restaurantService.getPage(pageNum, pageSize, keyword);
     }
 
     /**
@@ -65,9 +58,9 @@ public class AdminRestaurantController {
      */
     @DeleteMapping("/delete/{id}")
     public Result<?> delete(@PathVariable Long id) {
-        boolean ok = restaurantService.removeById(id);
-        return ok ? Result.success("删除成功") : Result.error("删除失败");
+        return restaurantService.deleteRestaurant(id);
     }
+
 
     /**
      * 切换营业状态（business_status）
@@ -83,37 +76,24 @@ public class AdminRestaurantController {
         return Result.success("已切换状态");
     }
 
-    /**
-     * 为餐厅添加轮播图
-     */
-    @PostMapping("/image/add")
-    public Result<?> addImage(@RequestBody RestaurantImage img) {
-
-        if (img.getRestaurantId() == null) {
-            return Result.error("restaurantId 不能为空");
-        }
-
-        boolean ok = restaurantImageService.addImage(img);
-        return ok ? Result.success("添加成功") : Result.error("添加失败");
-    }
-
-    /**
-     * 获取餐厅轮播图
-     */
     @GetMapping("/image/list/{restaurantId}")
     public Result<?> listImages(@PathVariable Long restaurantId) {
-        return Result.success(restaurantImageService.lambdaQuery()
-                .eq(RestaurantImage::getRestaurantId, restaurantId)
-                .orderByAsc(RestaurantImage::getSortOrder)
-                .list());
+        List<RestaurantImage> list = restaurantImageService.list(
+                new QueryWrapper<RestaurantImage>().eq("restaurant_id", restaurantId)
+        );
+        return Result.success(list);
     }
 
-    /**
-     * 删除轮播图
-     */
+    @PostMapping("/image/add")
+    public Result<?> addImage(@RequestBody RestaurantImage img) {
+        boolean ok = restaurantImageService.addImage(img);
+        return ok ? Result.success("上传成功") : Result.error("上传失败");
+    }
+
     @DeleteMapping("/image/delete/{id}")
     public Result<?> deleteImage(@PathVariable Long id) {
-        return restaurantImageService.removeById(id)
-                ? Result.success("删除成功") : Result.error("删除失败");
+        boolean ok = restaurantImageService.removeById(id);
+        return ok ? Result.success("删除成功") : Result.error("删除失败");
     }
+
 }

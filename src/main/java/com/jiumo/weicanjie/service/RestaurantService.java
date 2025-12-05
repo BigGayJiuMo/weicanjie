@@ -42,4 +42,15 @@ public interface RestaurantService extends IService<Restaurant> {
      * 实时联想（搜索提示）
      */
     Result<List<Restaurant>> suggest(String keyword);
+
+    /**
+     * 餐厅管理页面
+     */
+    Result<?> getPage(Integer pageNum, Integer pageSize, String keyword);
+
+    /**
+     * 删除餐厅
+     */
+    Result<?> deleteRestaurant(Long id);
+
 }
