@@ -3,8 +3,8 @@ package com.jiumo.weicanjie.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.common.Result;
+import com.jiumo.weicanjie.entity.LoginRequest;
 import com.jiumo.weicanjie.entity.User;
-import com.jiumo.weicanjie.entity.LoginRequest.UserInfo;
 import com.jiumo.weicanjie.mapper.UserMapper;
 import com.jiumo.weicanjie.service.UserService;
 import com.jiumo.weicanjie.service.UserStatsService;
@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -22,367 +21,205 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private UserMapper userMapper;
+
     @Autowired
     private UserStatsService userStatsService;
+
+
+    /**
+     * 手机号登录（统一入口）
+     */
     @Override
     @Transactional
-    public Result<User> wechatLogin(String code, UserInfo requestUserInfo, String phone) {
-        try {
-            log.info("微信登录，code: {}, phone: {}", code, phone);
-
-            // 生成模拟的openid（开发环境使用）
-            String openid = generateMockOpenid(code);
-
-            // 检查用户是否已存在
-            User existingUser = getUserByOpenid(openid);
-
-            if (existingUser != null) {
-                log.info("用户已存在，更新用户信息: {}", existingUser.getNickname());
-                // 更新用户信息
-                if (requestUserInfo != null) {
-                    existingUser.setNickname(requestUserInfo.getNickname());
-                    existingUser.setAvatarUrl(requestUserInfo.getAvatarUrl());
-                }
-                // 如果有手机号，更新手机号
-                if (phone != null && !phone.trim().isEmpty()) {
-                    // 检查手机号是否已被其他用户绑定
-                    User userWithSamePhone = getUserByPhone(phone);
-                    if (userWithSamePhone != null && !userWithSamePhone.getId().equals(existingUser.getId())) {
-                        return Result.error("该手机号已被其他用户绑定");
-                    }
-                    existingUser.setPhone(phone);
-                }
-                existingUser.setUpdatedTime(LocalDateTime.now());
-                updateById(existingUser);
-                return Result.success(existingUser);
-            } else {
-                // 新用户，自动注册
-                User newUser = new User();
-                newUser.setOpenid(openid);
-
-                if (requestUserInfo != null) {
-                    newUser.setNickname(requestUserInfo.getNickname());
-                    newUser.setAvatarUrl(requestUserInfo.getAvatarUrl());
-                } else {
-                    newUser.setNickname("微信用户_" + System.currentTimeMillis() % 10000);
-                    newUser.setAvatarUrl("https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9VemZoJ8rg/132");
-                }
-
-                // 设置手机号
-                if (phone != null && !phone.trim().isEmpty()) {
-                    // 检查手机号是否已被绑定
-                    User userWithSamePhone = getUserByPhone(phone);
-                    if (userWithSamePhone != null) {
-                        return Result.error("该手机号已被其他用户绑定");
-                    }
-                    newUser.setPhone(phone);
-                }
-
-                newUser.setCreatedTime(LocalDateTime.now());
-                newUser.setUpdatedTime(LocalDateTime.now());
-
-                boolean saved = save(newUser);
-                if (saved) {
-                    userStatsService.createDefaultStats(newUser.getId());
-                    log.info("新用户注册成功并初始化统计数据: {}", newUser.getNickname());
-                    return Result.success(newUser);
-                } else {
-                    log.error("用户注册失败");
-                    return Result.error("登录失败");
-                }
-            }
-        } catch (Exception e) {
-            log.error("微信登录异常", e);
-            return Result.error("登录异常: " + e.getMessage());
-        }
-    }
-
-    @Override
     public Result<User> loginByPhone(String phone) {
-        try {
-            log.info("手机号登录，phone: {}", phone);
 
-            if (phone == null || !phone.matches("^1[3-9]\\d{9}$")) {
-                return Result.error("手机号格式不正确");
-            }
-
-            User user = getUserByPhone(phone);
-            if (user != null) {
-                log.info("手机号登录成功: {}", user.getNickname());
-                return Result.success(user);
-            } else {
-                log.info("手机号未注册: {}", phone);
-                return Result.error("该手机号未注册");
-            }
-        } catch (Exception e) {
-            log.error("手机号登录异常", e);
-            return Result.error("登录异常: " + e.getMessage());
+        // 手机号格式校验
+        if (phone == null || !phone.matches("^1[3-9]\\d{9}$")) {
+            return Result.error("手机号格式不正确");
         }
-    }
 
-    @Override
-    @Transactional
-    public Result<User> registerOrLogin(String code, UserInfo requestUserInfo, String phone) {
-        try {
-            log.info("注册或登录，code: {}, phone: {}", code, phone);
+        // 查询用户
+        User user = getUserByPhone(phone);
 
-            // 验证手机号格式
-            if (phone == null || !phone.matches("^1[3-9]\\d{9}$")) {
-                return Result.error("手机号格式不正确");
-            }
-
-            // 生成模拟的openid（开发环境使用）
-            String openid = generateMockOpenid(code);
-
-            // 检查用户是否已存在
-            User existingUser = getUserByOpenid(openid);
-
-            if (existingUser != null) {
-                log.info("用户已存在，更新用户信息: {}", existingUser.getNickname());
-
-                // 检查手机号是否已被其他用户绑定
-                User userWithSamePhone = getUserByPhone(phone);
-                if (userWithSamePhone != null && !userWithSamePhone.getId().equals(existingUser.getId())) {
-                    return Result.error("该手机号已被其他用户绑定");
-                }
-
-                // 更新用户信息
-                if (requestUserInfo != null) {
-                    existingUser.setNickname(requestUserInfo.getNickname());
-                    existingUser.setAvatarUrl(requestUserInfo.getAvatarUrl());
-                }
-                existingUser.setPhone(phone);
-                existingUser.setUpdatedTime(LocalDateTime.now());
-                updateById(existingUser);
-
-                log.info("用户信息更新成功，绑定手机号: {}", phone);
-                return Result.success(existingUser);
-            } else {
-                // 新用户，自动注册
-                User newUser = new User();
-                newUser.setOpenid(openid);
-                newUser.setPhone(phone);
-
-                if (requestUserInfo != null) {
-                    newUser.setNickname(requestUserInfo.getNickname());
-                    newUser.setAvatarUrl(requestUserInfo.getAvatarUrl());
-                } else {
-                    newUser.setNickname("手机用户_" + phone.substring(7));
-                    newUser.setAvatarUrl("https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9VemZoJ8rg/132");
-                }
-
-                // 检查手机号是否已被绑定
-                User userWithSamePhone = getUserByPhone(phone);
-                if (userWithSamePhone != null) {
-                    return Result.error("该手机号已被其他用户绑定");
-                }
-
-                newUser.setCreatedTime(LocalDateTime.now());
-                newUser.setUpdatedTime(LocalDateTime.now());
-
-                boolean saved = save(newUser);
-                if (saved) {
-                    userStatsService.createDefaultStats(newUser.getId());
-                    log.info("新用户注册成功并初始化统计数据: {}", newUser.getNickname());
-                    return Result.success(newUser);
-                } else {
-                    log.error("用户注册失败");
-                    return Result.error("注册失败");
-                }
-            }
-        } catch (Exception e) {
-            log.error("注册或登录异常", e);
-            return Result.error("注册或登录异常: " + e.getMessage());
+        if (user != null) {
+            return Result.success(user);
         }
+
+        // 未注册 → 自动创建
+        User newUser = new User();
+        newUser.setPhone(phone);
+        newUser.setNickname("手机用户_" + phone.substring(7));
+        newUser.setAvatarUrl("/images/default-avatar.png");
+        newUser.setCreatedTime(LocalDateTime.now());
+        newUser.setUpdatedTime(LocalDateTime.now());
+
+        boolean saved = save(newUser);
+        if (!saved) {
+            return Result.error("注册失败");
+        }
+
+        userStatsService.createDefaultStats(newUser.getId());
+
+        return Result.success(newUser);
     }
 
-    @Override
-    public User getUserByOpenid(String openid) {
-        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(User::getOpenid, openid);
-        return getOne(queryWrapper);
-    }
 
+
+    /**
+     * 按手机号查询
+     */
     @Override
     public User getUserByPhone(String phone) {
-        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(User::getPhone, phone);
-        return getOne(queryWrapper);
+        return getOne(new LambdaQueryWrapper<User>().eq(User::getPhone, phone));
     }
+
 
     @Override
     @Transactional
     public Result<User> updateUserInfo(User user) {
-        try {
-            if (user.getId() == null) {
-                return Result.error("用户ID不能为空");
-            }
+        if (user.getId() == null) return Result.error("用户ID不能为空");
 
-            User existingUser = getById(user.getId());
-            if (existingUser == null) {
-                return Result.error("用户不存在");
-            }
+        User existing = getById(user.getId());
+        if (existing == null) return Result.error("用户不存在");
 
-            // 更新允许修改的字段
-            if (user.getNickname() != null) {
-                existingUser.setNickname(user.getNickname());
-            }
-            if (user.getAvatarUrl() != null) {
-                existingUser.setAvatarUrl(user.getAvatarUrl());
-            }
-            if (user.getPhone() != null) {
-                // 检查手机号是否已被其他用户绑定
-                User userWithSamePhone = getUserByPhone(user.getPhone());
-                if (userWithSamePhone != null && !userWithSamePhone.getId().equals(existingUser.getId())) {
-                    return Result.error("该手机号已被其他用户绑定");
-                }
-                existingUser.setPhone(user.getPhone());
-            }
-            existingUser.setUpdatedTime(LocalDateTime.now());
-
-            boolean updated = updateById(existingUser);
-            if (updated) {
-                return Result.success(existingUser);
-            } else {
-                return Result.error("更新失败");
-            }
-        } catch (Exception e) {
-            log.error("更新用户信息异常", e);
-            return Result.error("更新异常: " + e.getMessage());
+        if (user.getNickname() != null) {
+            existing.setNickname(user.getNickname());
         }
+
+        if (user.getAvatarUrl() != null) {
+            existing.setAvatarUrl(user.getAvatarUrl());
+        }
+
+        if (user.getPhone() != null) {
+            User samePhoneUser = getUserByPhone(user.getPhone());
+            if (samePhoneUser != null && !samePhoneUser.getId().equals(existing.getId())) {
+                return Result.error("该手机号已被其他用户绑定");
+            }
+            existing.setPhone(user.getPhone());
+        }
+
+        existing.setUpdatedTime(LocalDateTime.now());
+        updateById(existing);
+
+        return Result.success(existing);
     }
+
 
     @Override
     @Transactional
     public Result<User> updateUserProfile(Long userId, String nickname, String avatarUrl) {
-        try {
-            if (userId == null) {
-                return Result.error("用户ID不能为空");
-            }
 
-            User existingUser = getById(userId);
-            if (existingUser == null) {
-                return Result.error("用户不存在");
-            }
+        User user = getById(userId);
+        if (user == null) return Result.error("用户不存在");
 
-            // 更新昵称和头像
-            boolean updated = false;
-            if (nickname != null && !nickname.trim().isEmpty()) {
-                existingUser.setNickname(nickname.trim());
-                updated = true;
-            }
-            if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
-                existingUser.setAvatarUrl(avatarUrl.trim());
-                updated = true;
-            }
+        boolean changed = false;
 
-            if (updated) {
-                existingUser.setUpdatedTime(LocalDateTime.now());
-                boolean updateResult = updateById(existingUser);
-
-                if (updateResult) {
-                    // 重新查询获取最新数据
-                    User updatedUser = getById(userId);
-                    log.info("用户资料更新成功，userId: {}, nickname: {}, avatarUrl: {}",
-                            userId, nickname, avatarUrl);
-                    return Result.success(updatedUser);
-                } else {
-                    log.error("用户资料更新失败，userId: {}", userId);
-                    return Result.error("更新失败");
-                }
-            } else {
-                return Result.error("没有要更新的数据");
-            }
-        } catch (Exception e) {
-            log.error("更新用户资料异常", e);
-            return Result.error("更新异常: " + e.getMessage());
+        if (nickname != null && !nickname.trim().isEmpty()) {
+            user.setNickname(nickname);
+            changed = true;
         }
+
+        if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+            user.setAvatarUrl(avatarUrl);
+            changed = true;
+        }
+
+        if (!changed) return Result.error("没有要更新的数据");
+
+        user.setUpdatedTime(LocalDateTime.now());
+        updateById(user);
+
+        return Result.success(user);
     }
 
+
+    /**
+     * 绑定手机号（允许修改）
+     */
     @Override
     @Transactional
     public Result<String> bindPhone(Long userId, String phone) {
-        try {
-            // 简单的手机号格式验证
-            if (phone == null || !phone.matches("^1[3-9]\\d{9}$")) {
-                return Result.error("手机号格式不正确");
-            }
 
-            // 检查手机号是否已被绑定
-            LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(User::getPhone, phone)
-                    .ne(User::getId, userId);
-            User existingUser = getOne(queryWrapper);
-            if (existingUser != null) {
-                return Result.error("该手机号已被其他账号绑定");
-            }
-
-            // 绑定手机号
-            User user = getById(userId);
-            if (user == null) {
-                return Result.error("用户不存在");
-            }
-
-            user.setPhone(phone);
-            user.setUpdatedTime(LocalDateTime.now());
-            boolean updated = updateById(user);
-
-            if (updated) {
-                return Result.success("绑定成功");
-            } else {
-                return Result.error("绑定失败");
-            }
-        } catch (Exception e) {
-            log.error("绑定手机号异常", e);
-            return Result.error("绑定异常: " + e.getMessage());
+        if (!phone.matches("^1[3-9]\\d{9}$")) {
+            return Result.error("手机号格式不正确");
         }
+
+        // 查是否被其他人绑定
+        User existed = getOne(new LambdaQueryWrapper<User>()
+                .eq(User::getPhone, phone)
+                .ne(User::getId, userId));
+
+        if (existed != null) {
+            return Result.error("该手机号已被其他账号绑定");
+        }
+
+        User user = getById(userId);
+        if (user == null) return Result.error("用户不存在");
+
+        user.setPhone(phone);
+        user.setUpdatedTime(LocalDateTime.now());
+        updateById(user);
+
+        return Result.success("绑定成功");
     }
 
     @Override
     @Transactional
-    public Result<String> bindPhoneByCode(Long userId, String code) {
-        try {
-            log.info("通过授权码绑定手机号，userId: {}, code: {}", userId, code);
+    public Result<User> loginByWeChat(String code, LoginRequest.UserInfo userInfo) {
 
-            // 在实际项目中，这里应该调用微信API解密手机号：
-            // https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/getPhoneNumber.html
+        String openid = "mock_openid_" + code.hashCode();
 
-            // 开发环境模拟：生成模拟手机号
-            String mockPhone = generateMockPhoneNumber(code);
+        User user = getUserByOpenid(openid);
 
-            log.info("模拟获取手机号: {}", mockPhone);
-
-            // 使用现有的绑定手机号逻辑
-            return bindPhone(userId, mockPhone);
-
-        } catch (Exception e) {
-            log.error("通过授权码绑定手机号异常", e);
-            return Result.error("绑定异常: " + e.getMessage());
+        if (user != null) {
+            return Result.success(user);
         }
+
+        // 没有 → 创建新微信用户
+        User newUser = new User();
+        newUser.setOpenid(openid);
+        newUser.setNickname(userInfo != null ? userInfo.getNickname() : "微信用户");
+        newUser.setAvatarUrl(userInfo != null ? userInfo.getAvatarUrl() : "/images/default-avatar.png");
+        newUser.setCreatedTime(LocalDateTime.now());
+        newUser.setUpdatedTime(LocalDateTime.now());
+
+        save(newUser);
+        userStatsService.createDefaultStats(newUser.getId());
+
+        return Result.success(newUser);
     }
 
-    /**
-     * 生成模拟的openid（开发环境使用）
-     * @param code 微信code
-     * @return 模拟的openid
-     */
-    private String generateMockOpenid(String code) {
-        // 在实际项目中，这里应该调用微信API:
-        // https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=CODE&grant_type=authorization_code
+    @Override
+    @Transactional
+    public Result<String> bindWeChat(Long userId, String openid) {
 
-        // 开发环境模拟：使用code + 随机数生成模拟openid
-        return "mock_openid_" + code.hashCode() + "_" + UUID.randomUUID().toString().substring(0, 8);
+        if (openid == null || openid.isEmpty()) {
+            return Result.error("openid 不能为空");
+        }
+
+        // 是否被其他用户绑定
+        User existed = getOne(
+                new LambdaQueryWrapper<User>()
+                        .eq(User::getOpenid, openid)
+                        .ne(User::getId, userId)
+        );
+
+        if (existed != null) {
+            return Result.error("该微信账号已被其他用户绑定");
+        }
+
+        User user = getById(userId);
+        if (user == null) return Result.error("用户不存在");
+
+        user.setOpenid(openid);
+        user.setUpdatedTime(LocalDateTime.now());
+        updateById(user);
+
+        return Result.success("绑定成功");
     }
 
-    /**
-     * 生成模拟手机号（开发环境使用）
-     * @param code 微信授权码
-     * @return 模拟手机号
-     */
-    private String generateMockPhoneNumber(String code) {
-        // 在实际项目中，这里应该调用微信API解密手机号
-        // 开发环境模拟：生成一个以138开头的随机手机号
-        String baseNumber = String.valueOf(Math.abs(code.hashCode()) % 100000000);
-        return "138" + String.format("%08d", Integer.parseInt(baseNumber)).substring(0, 8);
+    @Override
+    public User getUserByOpenid(String openid) {
+        return getOne(new LambdaQueryWrapper<User>().eq(User::getOpenid, openid));
     }
 }

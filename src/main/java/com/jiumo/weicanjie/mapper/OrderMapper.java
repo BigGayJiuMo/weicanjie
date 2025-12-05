@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +27,9 @@ public interface OrderMapper extends BaseMapper<Order> {
             "transaction_id = #{transactionId}, pay_time = NOW(), updated_time = NOW() " +
             "WHERE id = #{orderId}")
     int updateOrderPaymentStatus(Long orderId, Integer status, Integer payStatus, String transactionId);
+
+    @Select("SELECT * FROM orders WHERE status = 1 AND created_time < #{expireTime}")
+    List<Order> selectOverdueUnpaidOrders(@Param("expireTime") LocalDateTime expireTime);
 
 
     List<Map<String, Object>> searchOrders(@Param("userId") Long userId,

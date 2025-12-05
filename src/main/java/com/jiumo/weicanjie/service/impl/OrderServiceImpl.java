@@ -259,7 +259,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             if (order == null) return Result.error("订单不存在");
             if (order.getStatus() != 1) return Result.error("订单状态无法取消支付");
 
-            int result = orderMapper.updateOrderStatus(orderId, 5);
+            int result = orderMapper.updateOrderStatus(orderId, 4);
             return result > 0 ? Result.success("支付已取消")
                     : Result.error("取消支付失败");
 
@@ -281,7 +281,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             if (status != 1 && status != 2)
                 return Result.error("该状态无法取消订单");
 
-            int result = orderMapper.updateOrderStatus(orderId, 5);
+            int result = orderMapper.updateOrderStatus(orderId, 4 );
             return result > 0 ? Result.success("订单取消成功")
                     : Result.error("订单取消失败");
 
