@@ -2,7 +2,11 @@ server:
   port: 8080
   servlet:
     context-path: /api
-
+minio:
+  endpoint: http://localhost:9000
+  accessKey: minioadmin    # 如果你修改过请改这里
+  secretKey: minioadmin
+  bucket: weicanjie
 spring:
   application:
     name: weicanjie-system
