@@ -19,11 +19,28 @@ public class AdminRestaurantBusinessHoursController {
 
     @GetMapping("/list/{restaurantId}")
     public Result<?> list(@PathVariable Long restaurantId) {
+
+        // 查询已有记录
         List<RestaurantBusinessHours> list = businessService.list(
                 new QueryWrapper<RestaurantBusinessHours>()
                         .eq("restaurant_id", restaurantId)
                         .orderByAsc("day_of_week")
         );
+
+        //  如果为空 → 初始化 7 天的营业模板
+        if (list.isEmpty()) {
+            for (int i = 1; i <= 7; i++) {
+                RestaurantBusinessHours bh = new RestaurantBusinessHours();
+                bh.setRestaurantId(restaurantId);
+                bh.setDayOfWeek(i);
+                bh.setIsOpen(0);
+                bh.setOpenTime(java.time.LocalTime.of(9, 0));
+                bh.setCloseTime(java.time.LocalTime.of(21, 0));
+
+                list.add(bh);
+            }
+        }
+
         return Result.success(list);
     }
 

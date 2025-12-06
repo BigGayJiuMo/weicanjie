@@ -17,11 +17,11 @@ public class RestaurantBusinessHours {
 
     private Integer dayOfWeek;   // 1～7
 
-    private LocalTime openTime;
+    private LocalTime openTime = LocalTime.of(9, 0);
 
-    private LocalTime closeTime;
+    private LocalTime closeTime = LocalTime.of(21, 0);
 
-    private Integer isOpen;
+    private Integer isOpen = 0;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdTime;
