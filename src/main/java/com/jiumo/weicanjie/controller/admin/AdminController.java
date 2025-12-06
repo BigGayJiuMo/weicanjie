@@ -27,7 +27,7 @@ public class AdminController {
 
     @PostMapping("/createMerchant")
     public Result<?> createMerchant(@RequestBody AdminUser user) {
-        return adminUserService.createMerchant(user);
+        return adminUserService.createAccount(user);
     }
 
 }

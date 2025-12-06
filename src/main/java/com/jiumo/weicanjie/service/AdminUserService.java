@@ -7,11 +7,11 @@ public interface AdminUserService {
 
     Result<?> login(String username, String password);
 
-    Result<?> createMerchant(AdminUser user);
+    Result<?> createAccount(AdminUser user); // 新方法（取代 createMerchant）
 
-    Result<?> listMerchants();  // 获取商家账号列表
+    Result<?> listAccounts();  // 查询所有账号（merchant + kitchen）
 
-    Result<?> deleteMerchant(Long id);  // 删除商家账号
+    Result<?> deleteMerchant(Long id);
 
-    Result<?> resetPassword(Long id);  // 重置密码
+    Result<?> resetPassword(Long id);
 }

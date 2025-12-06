@@ -13,10 +13,10 @@ public interface AdminUserMapper {
 
     @Insert("INSERT INTO admin_user(username, password, role, restaurant_id) " +
             "VALUES(#{username}, #{password}, #{role}, #{restaurantId})")
-    void insertMerchant(AdminUser user);
+    void insertAccount(AdminUser user);
 
-    @Select("SELECT * FROM admin_user WHERE role = 'merchant' ORDER BY id DESC")
-    List<AdminUser> selectMerchantList();
+    @Select("SELECT * FROM admin_user WHERE role IN ('merchant','kitchen') ORDER BY id DESC")
+    List<AdminUser> selectAllAccounts();
 
     @Delete("DELETE FROM admin_user WHERE id = #{id}")
     int deleteById(Long id);
