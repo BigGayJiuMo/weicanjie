@@ -25,6 +25,10 @@ public class AdminJwtInterceptor implements HandlerInterceptor {
             return false;
         }
 
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7); // 去掉 Bearer 空格
+        }
+
         try {
             Claims claims = jwtUtil.parseToken(token);
 
@@ -34,8 +38,10 @@ public class AdminJwtInterceptor implements HandlerInterceptor {
 
             return true;
         } catch (Exception e) {
+            e.printStackTrace(); // ⭐ 临时加上用于调试
             response.setStatus(401);
             return false;
         }
+
     }
 }

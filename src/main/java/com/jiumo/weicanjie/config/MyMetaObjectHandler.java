@@ -11,9 +11,19 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
 
     @Override
     public void insertFill(MetaObject metaObject) {
+
+        // 创建时间
         this.strictInsertFill(
                 metaObject,
                 "createdTime",
+                LocalDateTime.class,
+                LocalDateTime.now()
+        );
+
+        // 更新时间（新增时也需要填充）
+        this.strictInsertFill(
+                metaObject,
+                "updatedTime",
                 LocalDateTime.class,
                 LocalDateTime.now()
         );
@@ -21,6 +31,13 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
 
     @Override
     public void updateFill(MetaObject metaObject) {
-        // 如果你的图片不会更新，这里可留空
+
+        //  每次更新自动刷新 updatedTime
+        this.strictUpdateFill(
+                metaObject,
+                "updatedTime",
+                LocalDateTime.class,
+                LocalDateTime.now()
+        );
     }
 }
