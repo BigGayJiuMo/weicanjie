@@ -12,7 +12,4 @@ public interface DishMapper extends BaseMapper<Dish> {
 
     @Select("SELECT * FROM dish WHERE category_id = #{categoryId} AND status = 1 ORDER BY id")
     List<Dish> selectByCategoryId(Long categoryId);
-
-    @Select("SELECT * FROM dish WHERE restaurant_id = #{restaurantId} AND status = 1 ORDER BY category_id, id")
-    List<Dish> selectByRestaurantId(Long restaurantId);
 }

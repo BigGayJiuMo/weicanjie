@@ -59,8 +59,8 @@ public class UploadController {
                     folder = "restaurant/" + restaurantId + "/hall/";
                     break;
 
-                case "food":
-                    folder = "restaurant/" + restaurantId + "/food/";
+                case "dish":
+                    folder = "restaurant/" + restaurantId + "/dish/";
                     break;
 
                 default:
