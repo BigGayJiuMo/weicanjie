@@ -21,4 +21,9 @@ public interface DishCategoryService extends IService<DishCategory> {
      * @return 分类及菜品结果
      */
     Result<List<DishCategory>> getCategoriesWithDishes(Long restaurantId);
+
+    /**
+     * 后台菜品分类
+     */
+    boolean hasDish(Long categoryId);
 }

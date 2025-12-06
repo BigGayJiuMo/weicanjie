@@ -1,6 +1,7 @@
 // CategoryServiceImpl.java
 package com.jiumo.weicanjie.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.DishCategory;
@@ -62,4 +63,14 @@ public class DishCategoryServiceImpl extends ServiceImpl<DishCategoryMapper, Dis
             return Result.error("获取数据失败");
         }
     }
+
+    /**
+     * 后台菜品分类
+     */
+    @Override
+    public boolean hasDish(Long categoryId) {
+        return dishMapper.selectByCategoryId(categoryId).size() > 0;
+    }
+
+
 }
