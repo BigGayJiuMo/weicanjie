@@ -100,6 +100,41 @@ public class OrderController {
         return orderService.getUserOrderList(userId);
     }
 
+    /**
+     * 搜索订单（按餐厅/菜品）
+     */
+    @GetMapping("/search")
+    public Result<List<Map<String, Object>>> searchOrders(
+            @RequestParam Long userId,
+            @RequestParam String keyword) {
+        return orderService.searchOrders(userId, keyword);
+    }
+
+    /** 用户申请退款 */
+    @PostMapping("/refund/apply")
+    public Result<String> applyRefund(@RequestBody RefundApplyRequest req) {
+        return orderService.requestRefund(req.getOrderId(), req.getReason(), req.getRemark());
+    }
+
+    @Data
+    public static class RefundApplyRequest {
+        private Long orderId;
+        private String reason;
+        private String remark;
+    }
+
+    /** 后台同意退款 */
+    @PostMapping("/refund/approve/{orderId}")
+    public Result<String> approveRefund(@PathVariable Long orderId) {
+        return orderService.approveRefund(orderId);
+    }
+
+    /** 后台拒绝退款 */
+    @PostMapping("/refund/reject/{orderId}")
+    public Result<String> rejectRefund(@PathVariable Long orderId) {
+        return orderService.rejectRefund(orderId);
+    }
+
     @Data
     public static class BatchOrderRequest {
         private List<SingleOrderRequest> restaurants;
@@ -109,16 +144,6 @@ public class OrderController {
             private OrderRequest.OrderDTO order;
             private List<OrderRequest.OrderItemRequest> items;
         }
-    }
-
-    /**
-     * 搜索订单（按餐厅/菜品）
-     */
-    @GetMapping("/search")
-    public Result<List<Map<String, Object>>> searchOrders(
-            @RequestParam Long userId,
-            @RequestParam String keyword) {
-        return orderService.searchOrders(userId, keyword);
     }
 
 }

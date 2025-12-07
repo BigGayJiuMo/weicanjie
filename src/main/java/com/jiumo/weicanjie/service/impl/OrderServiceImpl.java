@@ -1,6 +1,7 @@
 package com.jiumo.weicanjie.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.controller.OrderController;
 import com.jiumo.weicanjie.entity.*;
@@ -13,8 +14,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,6 +40,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Autowired
     private UserStatsService userStatsService;
+
+    @Autowired
+    private RefundService refundService;
 
     /** 单餐厅创建订单 */
     @Override
@@ -214,7 +216,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     public Result<String> updateOrderStatus(Long orderId, Integer status) {
         try {
-            int result = orderMapper.updateOrderStatus(orderId, status);
+            int result = orderMapper.updateOrderStatusOnly(orderId, status);
             return result > 0 ? Result.success("订单状态更新成功")
                     : Result.error("订单状态更新失败");
         } catch (Exception e) {
@@ -259,7 +261,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             if (order == null) return Result.error("订单不存在");
             if (order.getStatus() != 1) return Result.error("订单状态无法取消支付");
 
-            int result = orderMapper.updateOrderStatus(orderId, 4);
+            int result = orderMapper.updateOrderStatusOnly(orderId, 4);
             return result > 0 ? Result.success("支付已取消")
                     : Result.error("取消支付失败");
 
@@ -281,7 +283,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             if (status != 1 && status != 2)
                 return Result.error("该状态无法取消订单");
 
-            int result = orderMapper.updateOrderStatus(orderId, 4 );
+            int result = orderMapper.updateOrderStatusOnly(orderId, 5 );
             return result > 0 ? Result.success("订单取消成功")
                     : Result.error("订单取消失败");
 
@@ -341,12 +343,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     private String getStatusText(Integer status) {
-        if (status == null) return "未知状态";
         switch (status) {
             case 1: return "待支付";
             case 2: return "待处理";
-            case 3: return "已完成";
-            case 4: return "已取消";
+            case 3: return "制作中";
+            case 4: return "已完成";
+            case 5: return "已取消";
+            case 6: return "退款中";
+            case 7: return "已退款";
             default: return "未知状态";
         }
     }
@@ -375,5 +379,101 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         return Result.success(baseList);
     }
+
+    @Override
+    public Page<Order> getAdminOrderPage(int pageNum, int pageSize, Long restaurantId, Integer status, String keyword) {
+
+        Page<Order> page = new Page<>(pageNum, pageSize);
+
+        LambdaQueryWrapper<Order> qw = new LambdaQueryWrapper<>();
+
+        if (restaurantId != null) {
+            qw.eq(Order::getRestaurantId, restaurantId);
+        }
+
+        if (status != null) {
+            qw.eq(Order::getStatus, status);
+        }
+
+        if (keyword != null && !keyword.isEmpty()) {
+            qw.and(w -> w.like(Order::getOrderNumber, keyword));
+        }
+
+        qw.orderByDesc(Order::getCreatedTime);
+
+        return orderMapper.selectPage(page, qw);
+    }
+
+    @Override
+    public Result<?> getKitchenOrderList(Long restaurantId) {
+
+        LambdaQueryWrapper<Order> qw = new LambdaQueryWrapper<>();
+
+        //  只有不为 null 时才按餐厅过滤
+        if (restaurantId != null) {
+            qw.eq(Order::getRestaurantId, restaurantId);
+        }
+
+        // 只看待处理 + 制作中
+        qw.in(Order::getStatus, Arrays.asList(2, 3));
+        qw.orderByAsc(Order::getStatus)
+                .orderByDesc(Order::getCreatedTime);
+
+        List<Order> orders = orderMapper.selectList(qw);
+
+        for (Order order : orders) {
+            List<OrderItem> items = orderItemMapper.selectByOrderIdWithDishInfo(order.getId());
+            order.setOrderItems(items);
+        }
+
+        return Result.success(orders);
+    }
+
+    @Override
+    public Result<String> requestRefund(Long orderId, String reason, String remark) {
+
+        Order order = orderMapper.selectById(orderId);
+        if (order == null) {
+            return Result.error("订单不存在");
+        }
+
+        if (!(order.getStatus() == 3 || order.getStatus() == 4)) {
+            return Result.error("当前状态无法申请退款");
+        }
+
+        // 插入退款记录
+        refundService.createRefund(
+                orderId,
+                order.getUserId(),
+                order.getRestaurantId(),
+                reason,
+                remark
+        );
+
+        // 更新订单状态 → 6 = 退款中
+        orderMapper.updateOrderStatusOnly(orderId, 6);
+
+        return Result.success("退款申请已提交");
+    }
+
+    @Override
+    public Result<String> approveRefund(Long orderId) {
+
+        refundService.approveRefund(orderId);
+        orderMapper.updateOrderStatusOnly(orderId, 7); // 7 = 已退款
+
+        return Result.success("退款已同意");
+    }
+
+    @Override
+    public Result<String> rejectRefund(Long orderId) {
+
+        refundService.rejectRefund(orderId);
+        orderMapper.updateOrderStatusOnly(orderId, 3); // 回到制作中
+
+        return Result.success("退款已拒绝");
+    }
+
+
 
 }

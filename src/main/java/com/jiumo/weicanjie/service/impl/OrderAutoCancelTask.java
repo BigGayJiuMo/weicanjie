@@ -28,8 +28,8 @@ public class OrderAutoCancelTask {
         List<Order> overdueOrders = orderMapper.selectOverdueUnpaidOrders(expireTime);
 
         for (Order order : overdueOrders) {
-            // 更新订单状态为 4（取消）
-            orderMapper.updateOrderStatus(order.getId(), 4);
+            // 更新订单状态为 5（取消）
+            orderMapper.updateOrderStatusOnly(order.getId(), 5);
 
             log.info("订单 {} 超过30分钟未支付，已自动取消", order.getOrderNumber());
         }

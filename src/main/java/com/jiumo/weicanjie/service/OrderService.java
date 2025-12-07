@@ -1,5 +1,6 @@
 package com.jiumo.weicanjie.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jiumo.weicanjie.controller.OrderController;
 import com.jiumo.weicanjie.entity.Order;
@@ -71,5 +72,28 @@ public interface OrderService extends IService<Order> {
      */
     Result<List<Map<String, Object>>> searchOrders(Long userId, String keyword);
 
+    /**
+     * 后台分页查看订单
+     */
+    Page<Order> getAdminOrderPage(int pageNum, int pageSize, Long restaurantId, Integer status, String keyword);
 
+    /**
+     * 后台后厨看板查看订单
+     */
+    Result<?> getKitchenOrderList(Long restaurantId);
+
+    /**
+     * 用户申请退款（status → 6）
+     */
+    Result<String> requestRefund(Long orderId, String reason, String remark);
+
+    /**
+     * 后台审核退款（同意退款：6 → 7）
+     */
+    Result<String> approveRefund(Long orderId);
+
+    /**
+     * 后台拒绝退款（6 → 4 已完成）
+     */
+    Result<String> rejectRefund(Long orderId);
 }
