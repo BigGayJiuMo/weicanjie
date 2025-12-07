@@ -15,7 +15,7 @@ public class RefundRecord {
     private String refundRemark;     // 详细说明
 
     private Integer status;          // 1申请中 2同意退款 3拒绝退款
-
+    private Integer previousStatus; //订单原状态
     private Date applyTime;
     private Date approveTime;
 

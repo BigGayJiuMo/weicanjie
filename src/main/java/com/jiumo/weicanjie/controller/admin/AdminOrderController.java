@@ -54,4 +54,20 @@ public class AdminOrderController {
     ) {
         return orderService.updateOrderStatus(orderId, status);
     }
+
+    /**
+     * 后台同意退款
+     */
+    @PostMapping("/refund/approve/{orderId}")
+    public Result<?> approveRefund(@PathVariable Long orderId) {
+        return orderService.approveRefund(orderId);
+    }
+
+    /**
+     * 后台拒绝退款
+     */
+    @PostMapping("/refund/reject/{orderId}")
+    public Result<?> rejectRefund(@PathVariable Long orderId) {
+        return orderService.rejectRefund(orderId);
+    }
 }

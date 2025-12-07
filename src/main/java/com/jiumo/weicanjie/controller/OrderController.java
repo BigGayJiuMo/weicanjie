@@ -123,18 +123,6 @@ public class OrderController {
         private String remark;
     }
 
-    /** 后台同意退款 */
-    @PostMapping("/refund/approve/{orderId}")
-    public Result<String> approveRefund(@PathVariable Long orderId) {
-        return orderService.approveRefund(orderId);
-    }
-
-    /** 后台拒绝退款 */
-    @PostMapping("/refund/reject/{orderId}")
-    public Result<String> rejectRefund(@PathVariable Long orderId) {
-        return orderService.rejectRefund(orderId);
-    }
-
     @Data
     public static class BatchOrderRequest {
         private List<SingleOrderRequest> restaurants;

@@ -261,7 +261,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             if (order == null) return Result.error("订单不存在");
             if (order.getStatus() != 1) return Result.error("订单状态无法取消支付");
 
-            int result = orderMapper.updateOrderStatusOnly(orderId, 4);
+            int result = orderMapper.updateOrderStatusOnly(orderId, 5);
             return result > 0 ? Result.success("支付已取消")
                     : Result.error("取消支付失败");
 
@@ -392,6 +392,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
 
         if (status != null) {
+            try {
+                status = Integer.valueOf(status + "");
+            } catch (Exception ignored) {}
+
             qw.eq(Order::getStatus, status);
         }
 
@@ -460,7 +464,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     public Result<String> approveRefund(Long orderId) {
 
         refundService.approveRefund(orderId);
-        orderMapper.updateOrderStatusOnly(orderId, 7); // 7 = 已退款
+
+        // 退款成功 → 7
+        orderMapper.updateOrderStatusOnly(orderId, 7);
 
         return Result.success("退款已同意");
     }
@@ -468,8 +474,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     public Result<String> rejectRefund(Long orderId) {
 
+        // refundService 内部会恢复 previous_status
         refundService.rejectRefund(orderId);
-        orderMapper.updateOrderStatusOnly(orderId, 3); // 回到制作中
 
         return Result.success("退款已拒绝");
     }
