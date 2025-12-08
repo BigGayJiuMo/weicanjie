@@ -204,7 +204,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             map.put("subTotal", subTotal);
             map.put("packingFee", order.getPackingFee());
             map.put("totalAmount", order.getTotalAmount());
-
+            map.put("remark", order.getRemark());
             return Result.success(map);
 
         } catch (Exception e) {

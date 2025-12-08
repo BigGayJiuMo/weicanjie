@@ -16,7 +16,7 @@ public class OrderRequest {
 
         private BigDecimal totalAmount;
         private BigDecimal packingFee;
-
+        private String remark;
         private Integer eatType;
     }
 

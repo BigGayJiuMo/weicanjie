@@ -116,6 +116,20 @@ public class OrderController {
         return orderService.requestRefund(req.getOrderId(), req.getReason(), req.getRemark());
     }
 
+    @PostMapping("/updateRemark")
+    public Result<?> updateRemark(@RequestBody Map<String, Object> req) {
+        Long orderId = Long.valueOf(req.get("orderId").toString());
+        String remark = (String) req.get("remark");
+
+        Order order = orderService.getById(orderId);
+        if (order == null) return Result.error("订单不存在");
+
+        order.setRemark(remark);
+        orderService.updateById(order);
+
+        return Result.ok();
+    }
+
     @Data
     public static class RefundApplyRequest {
         private Long orderId;
