@@ -30,6 +30,11 @@ public class AdminJwtInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+
+        // 允许预检请求
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
+
+        // 获取请求头中的 Authorization 字段，通常为 "Bearer <token>"
         String token = request.getHeader("Authorization");
         if (token == null || token.isEmpty()) {
             response.setStatus(401);  // 未提供 token，返回 401 错误
@@ -42,13 +47,14 @@ public class AdminJwtInterceptor implements HandlerInterceptor {
         }
 
         try {
+            // 使用 JwtUtil 解析 token
             Claims claims = jwtUtil.parseToken(token);
-            // 通过调试日志查看 token 是否被正确解析
-            System.out.println("Decoded JWT Claims: " + claims);
 
+            // 将用户信息存入请求属性，供后续使用
             request.setAttribute("uid", claims.get("uid"));
             request.setAttribute("role", claims.get("role"));
 
+            // 处理餐厅ID，解决 Integer 转 Long 的问题
             Object rid = claims.get("restaurantId");
             if (rid instanceof Integer) {
                 request.setAttribute("restaurantId", ((Integer) rid).longValue());
@@ -65,5 +71,4 @@ public class AdminJwtInterceptor implements HandlerInterceptor {
             return false;
         }
     }
-
 }
