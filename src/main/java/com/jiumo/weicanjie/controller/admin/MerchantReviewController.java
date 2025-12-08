@@ -52,7 +52,7 @@ public class MerchantReviewController {
         if (!"merchant".equals(role) && !"super".equals(role))
             return Result.error("无权限");
 
-        UserReview review = userReviewMapper.selectById(reviewId);
+        UserReview review = userReviewMapper.selectById(reviewId);  
         if (review == null) return Result.error("评价不存在");
 
         if ("merchant".equals(role) && !review.getRestaurantId().equals(restaurantId))

@@ -26,7 +26,7 @@ public class AdminJwtInterceptor implements HandlerInterceptor {
         }
 
         if (token.startsWith("Bearer ")) {
-            token = token.substring(7); // 去掉 Bearer 空格
+            token = token.substring(7);
         }
 
         try {
@@ -34,14 +34,22 @@ public class AdminJwtInterceptor implements HandlerInterceptor {
 
             request.setAttribute("uid", claims.get("uid"));
             request.setAttribute("role", claims.get("role"));
-            request.setAttribute("restaurantId", claims.get("restaurantId"));
+
+            // 修复 Integer 无法转 Long 的问题
+            Object rid = claims.get("restaurantId");
+            if (rid instanceof Integer) {
+                request.setAttribute("restaurantId", ((Integer) rid).longValue());
+            } else if (rid instanceof Long) {
+                request.setAttribute("restaurantId", rid);
+            } else {
+                request.setAttribute("restaurantId", null);
+            }
 
             return true;
+
         } catch (Exception e) {
-            e.printStackTrace(); // ⭐ 临时加上用于调试
             response.setStatus(401);
             return false;
         }
-
     }
 }
