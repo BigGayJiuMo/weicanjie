@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jiumo.weicanjie.entity.Order;
 import org.apache.ibatis.annotations.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -38,5 +39,15 @@ public interface OrderMapper extends BaseMapper<Order> {
     List<Map<String, Object>> searchOrders(
             @Param("userId") Long userId,
             @Param("keyword") String keyword
+    );
+
+    List<?> getReportData(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    List<Map<String, Object>> getSalesTrend(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("groupBy") String groupBy
     );
 }

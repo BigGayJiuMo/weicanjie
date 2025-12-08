@@ -41,24 +41,16 @@ public interface UserReviewMapper extends BaseMapper<UserReview> {
     /** 后台审核列表（super 管理员使用） */
     @Select({
             "<script>",
-            "SELECT r.*, ",
-            "r.reply_content AS replyContent, ",
-            "r.reply_time AS replyTime, ",
-            "u.nickname AS username, ",
-            "u.avatar_url AS avatar ",
-            "FROM user_review r ",
-            "LEFT JOIN users u ON r.user_id = u.id ",
-            "WHERE r.restaurant_id = #{restaurantId} ",
-            "<if test='reviewStatus != -1'>",
-            "AND r.review_status = #{reviewStatus} ",
-            "</if>",
-            "ORDER BY r.created_time DESC",
+            "SELECT * FROM user_review WHERE 1=1",
+            " <if test='restaurantId != null'> AND restaurant_id = #{restaurantId} </if>",
+            " <if test='reviewStatus != -1'> AND review_status = #{reviewStatus} </if>",
+            " ORDER BY created_time DESC",
             "</script>"
     })
-    List<Map<String, Object>> adminSelectReviews(
+    List<Map<String, Object>> adminSelectReviewsFlexible(
             @Param("restaurantId") Long restaurantId,
-            @Param("reviewStatus") Integer reviewStatus);
-
+            @Param("reviewStatus") Integer reviewStatus
+    );
 
     /** 回复评价 */
     @Update("UPDATE user_review " +

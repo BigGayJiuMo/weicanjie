@@ -29,7 +29,10 @@ public class UserReviewServiceImpl implements UserReviewService {
 
     @Override
     public List<Map<String, Object>> getAdminReviews(Long restaurantId, Integer reviewStatus) {
-        List<Map<String, Object>> list = userReviewMapper.adminSelectReviews(restaurantId, reviewStatus);
+
+        List<Map<String, Object>> list =
+                userReviewMapper.adminSelectReviewsFlexible(restaurantId, reviewStatus);
+
         return handleList(list);
     }
 

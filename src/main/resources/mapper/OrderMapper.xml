@@ -29,5 +29,25 @@
         ORDER BY o.created_time DESC
     </select>
 
+    <select id="getReportData" resultType="map">
+        SELECT
+            r.name AS restaurant_name,
+            COUNT(DISTINCT o.id) AS order_count,
+            -- 使用子查询计算总金额，避免重复计算
+            (
+                SELECT SUM(o2.total_amount)
+                FROM orders o2
+                WHERE o2.restaurant_id = r.id
+                  AND o2.status = 4
+                  AND o2.created_time BETWEEN #{startDate} AND #{endDate}
+            ) AS total_sales,
+            SUM(oi.quantity) AS total_items_sold
+        FROM orders o
+                 JOIN restaurant r ON o.restaurant_id = r.id
+                 LEFT JOIN order_items oi ON o.id = oi.order_id
+        WHERE o.status = 4
+          AND o.created_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY r.id
+    </select>
 
 </mapper>

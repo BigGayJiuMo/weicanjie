@@ -27,15 +27,18 @@ public class AdminReviewController {
     @Autowired
     private ReviewReportService reviewReportService;
 
-    /** ============= ① 用户评价审核列表（你原来的接口） ============= */
+    /** 用户评价审核列表 */
     @GetMapping("/list")
-    public Result<?> list(@RequestParam Long restaurantId,
-                          @RequestParam Integer reviewStatus) {
-
-        return Result.ok(userReviewService.getAdminReviews(restaurantId, reviewStatus));
+    public Result<?> list(
+            @RequestParam(required = false) Long restaurantId,
+            @RequestParam(defaultValue = "-1") Integer reviewStatus
+    ) {
+        return Result.ok(
+                userReviewService.getAdminReviews(restaurantId, reviewStatus)
+        );
     }
 
-    /** ============= ② 用户评价审核（你原来的接口） ============= */
+    /** 用户评价审核 */
     @PostMapping("/audit")
     @Transactional
     public Result<?> auditReview(
@@ -65,7 +68,7 @@ public class AdminReviewController {
         return Result.success("审核完成");
     }
 
-    /** ③-1 举报列表（ReviewReport + UserReview 信息） */
+    /** 举报列表 */
     @GetMapping("/report/list")
     public Result<?> getReportList(
             @RequestParam(required = false) Long restaurantId,
@@ -82,7 +85,7 @@ public class AdminReviewController {
     }
 
 
-    /** ③-2 举报审核（通过 / 驳回，并可隐藏评价） */
+    /** 举报审核 */
     @PostMapping("/report/audit")
     @Transactional
     public Result<?> auditReport(
