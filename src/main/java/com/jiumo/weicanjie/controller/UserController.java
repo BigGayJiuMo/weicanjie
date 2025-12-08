@@ -1,8 +1,8 @@
 package com.jiumo.weicanjie.controller;
 
 import com.jiumo.weicanjie.common.Result;
-import com.jiumo.weicanjie.entity.BindPhoneRequest;
-import com.jiumo.weicanjie.entity.LoginRequest;
+import com.jiumo.weicanjie.dto.BindPhoneRequest;
+import com.jiumo.weicanjie.dto.LoginRequest;
 import com.jiumo.weicanjie.entity.User;
 import com.jiumo.weicanjie.entity.UserStats;
 import com.jiumo.weicanjie.service.UserService;

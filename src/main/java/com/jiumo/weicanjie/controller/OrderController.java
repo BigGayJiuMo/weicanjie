@@ -2,7 +2,7 @@ package com.jiumo.weicanjie.controller;
 
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.Order;
-import com.jiumo.weicanjie.entity.OrderRequest;
+import com.jiumo.weicanjie.dto.OrderRequest;
 import com.jiumo.weicanjie.service.OrderService;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;

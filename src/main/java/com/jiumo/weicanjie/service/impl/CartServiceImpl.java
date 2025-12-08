@@ -1,9 +1,10 @@
 package com.jiumo.weicanjie.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.Cart;
 import com.jiumo.weicanjie.mapper.CartMapper;
-import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,40 +15,63 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 实现购物车相关功能的服务类
+ * 提供获取、更新、删除、保存购物车项的功能
+ */
 @Service
 public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements CartService {
 
     @Autowired
     private CartMapper cartMapper;
 
+    /**
+     * 获取用户指定餐厅的购物车列表
+     *
+     * @param userId 用户ID
+     * @return 用户的购物车列表
+     */
     @Override
     public Result<List<Cart>> getUserCartList(Long userId) {
         try {
-            List<Cart> cartList = cartMapper.selectByUserId(userId);
+            List<Cart> cartList = cartMapper.selectByUserId(userId); // 根据用户ID查询购物车
             return Result.success(cartList);
         } catch (Exception e) {
             return Result.error("获取购物车列表失败: " + e.getMessage());
         }
     }
 
+    /**
+     * 获取用户在指定餐厅的购物车映射
+     *
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @return 用户购物车映射（菜品ID -> 数量）
+     */
     @Override
     public Result<Map<Long, Integer>> getUserCartMap(Long userId, Long restaurantId) {
         try {
-            List<Cart> cartList = cartMapper.selectByUserAndRestaurant(userId, restaurantId);
+            List<Cart> cartList = cartMapper.selectByUserAndRestaurant(userId, restaurantId); // 根据用户和餐厅查询购物车
             Map<Long, Integer> cartMap = cartList.stream()
-                    .collect(Collectors.toMap(Cart::getDishId, Cart::getQuantity));
+                    .collect(Collectors.toMap(Cart::getDishId, Cart::getQuantity)); // 将购物车转为菜品ID和数量的映射
             return Result.success(cartMap);
         } catch (Exception e) {
             return Result.error("获取购物车映射失败: " + e.getMessage());
         }
     }
 
+    /**
+     * 保存购物车项，若购物车为空则直接返回成功
+     *
+     * @param cartList 购物车项列表
+     * @return 保存结果
+     */
     @Override
     @Transactional
     public Result<String> saveCart(List<Cart> cartList) {
         try {
             if (cartList == null || cartList.isEmpty()) {
-                return Result.success("空购物车，无需保存");
+                return Result.success("空购物车，无需保存"); // 如果购物车为空，直接返回
             }
 
             Long userId = cartList.get(0).getUserId();
@@ -56,7 +80,7 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
             // 清空旧购物车（覆盖式）
             cartMapper.deleteByUserAndRestaurant(userId, restaurantId);
 
-            // 重新插入
+            // 重新插入购物车项
             for (Cart cart : cartList) {
                 cartMapper.insert(cart);
             }
@@ -67,12 +91,21 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         }
     }
 
-
+    /**
+     * 更新购物车中某个商品的数量
+     * 如果数量为0或负数，则从购物车中移除该商品
+     *
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @param dishId 菜品ID
+     * @param quantity 新的数量
+     * @return 更新结果
+     */
     @Override
     @Transactional
     public Result<String> updateCartQuantity(Long userId, Long restaurantId, Long dishId, Integer quantity) {
         try {
-            Cart cart = cartMapper.selectByUserAndDish(userId, restaurantId, dishId);
+            Cart cart = cartMapper.selectByUserAndDish(userId, restaurantId, dishId); // 根据用户、餐厅和菜品查询购物车项
             if (cart == null) {
                 return Result.error("购物车商品不存在");
             }
@@ -81,23 +114,32 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
                 // 如果数量为0或负数，移除商品
                 cartMapper.deleteById(cart.getId());
             } else {
-                // 更新数量
+                // 更新菜品数量
                 cart.setQuantity(quantity);
                 cartMapper.updateById(cart);
             }
+
             return Result.success("更新成功");
         } catch (Exception e) {
             return Result.error("更新购物车失败: " + e.getMessage());
         }
     }
 
+    /**
+     * 从购物车中移除某个商品
+     *
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @param dishId 菜品ID
+     * @return 移除结果
+     */
     @Override
     @Transactional
     public Result<String> removeFromCart(Long userId, Long restaurantId, Long dishId) {
         try {
-            Cart cart = cartMapper.selectByUserAndDish(userId, restaurantId, dishId);
+            Cart cart = cartMapper.selectByUserAndDish(userId, restaurantId, dishId); // 查找购物车项
             if (cart != null) {
-                cartMapper.deleteById(cart.getId());
+                cartMapper.deleteById(cart.getId()); // 删除该购物车项
             }
             return Result.success("移除成功");
         } catch (Exception e) {
@@ -105,52 +147,94 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         }
     }
 
+    /**
+     * 清空用户指定餐厅的购物车
+     *
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @return 清空结果
+     */
     @Override
     @Transactional
     public Result<String> clearUserCart(Long userId, Long restaurantId) {
         try {
-            cartMapper.deleteByUserAndRestaurant(userId, restaurantId);
+            cartMapper.deleteByUserAndRestaurant(userId, restaurantId); // 删除指定餐厅的购物车
             return Result.success("清空成功");
         } catch (Exception e) {
             return Result.error("清空购物车失败: " + e.getMessage());
         }
     }
 
+    /**
+     * 清空用户所有购物车
+     *
+     * @param userId 用户ID
+     * @return 清空结果
+     */
     @Override
     @Transactional
     public Result<String> clearAllUserCart(Long userId) {
         try {
-            cartMapper.deleteByUserId(userId);
+            cartMapper.deleteByUserId(userId); // 删除用户所有购物车项
             return Result.success("清空成功");
         } catch (Exception e) {
             return Result.error("清空购物车失败: " + e.getMessage());
         }
     }
 
+    /**
+     * 删除用户指定餐厅的购物车
+     *
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @return 删除结果
+     */
     @Override
     @Transactional
     public Result<String> removeRestaurantCart(Long userId, Long restaurantId) {
         try {
-            cartMapper.deleteByUserAndRestaurant(userId, restaurantId);
+            cartMapper.deleteByUserAndRestaurant(userId, restaurantId); // 删除指定餐厅的购物车
             return Result.success("删除成功");
         } catch (Exception e) {
             return Result.error("删除购物车失败: " + e.getMessage());
         }
     }
 
-    // 新增方法实现
+    /**
+     * 获取用户在指定餐厅的购物车映射（菜品ID -> 数量）
+     *
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @return 用户购物车映射
+     */
     @Override
     public Result<Map<Long, Integer>> getUserCart(Long userId, Long restaurantId) {
         // 直接调用已有的方法
         return getUserCartMap(userId, restaurantId);
     }
 
+    /**
+     * 更新购物车项（数量）
+     *
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @param dishId 菜品ID
+     * @param quantity 新的数量
+     * @return 更新结果
+     */
     @Override
     public Result<String> updateCartItem(Long userId, Long restaurantId, Long dishId, Integer quantity) {
         // 直接调用已有的方法
         return updateCartQuantity(userId, restaurantId, dishId, quantity);
     }
 
+    /**
+     * 获取购物车项映射（菜品ID -> 数量）
+     *
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @return 购物车项映射
+     */
     @Override
     public Result<Map<Long, Integer>> getCartItemMap(Long userId, Long restaurantId) {
         // 直接调用已有的方法

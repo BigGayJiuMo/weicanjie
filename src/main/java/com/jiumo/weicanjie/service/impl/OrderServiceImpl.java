@@ -4,11 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.controller.OrderController;
+import com.jiumo.weicanjie.dto.OrderRequest;
 import com.jiumo.weicanjie.entity.*;
 import com.jiumo.weicanjie.mapper.OrderItemMapper;
 import com.jiumo.weicanjie.mapper.OrderMapper;
 import com.jiumo.weicanjie.common.Result;
-import com.jiumo.weicanjie.mapper.UserStatsMapper;
 import com.jiumo.weicanjie.service.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,26 +44,32 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Autowired
     private RefundService refundService;
 
-    /** 单餐厅创建订单 */
+    /**
+     * 创建单餐厅订单
+     * @param orderDTO 订单数据传输对象
+     * @param items 订单项数据列表
+     * @return 创建结果，包含订单详细信息
+     */
     @Override
     @Transactional
     public Result<Order> createOrder(OrderRequest.OrderDTO orderDTO, List<OrderRequest.OrderItemRequest> items) {
         try {
-            // 生成订单号
+            // 生成唯一的订单号
             String orderNumber = "ORD" + System.currentTimeMillis() + new Random().nextInt(1000);
 
+            // 创建订单对象并填充字段
             Order order = new Order();
             BeanUtils.copyProperties(orderDTO, order);
             order.setOrderNumber(orderNumber);
-            order.setStatus(1);         // 待支付
-            order.setPayStatus(0);      // 未支付
+            order.setStatus(1);         // 状态设置为待支付
+            order.setPayStatus(0);      // 初始支付状态为未支付
             order.setCreatedTime(LocalDateTime.now());
             order.setUpdatedTime(LocalDateTime.now());
 
-            // 打包费
+            // 设置打包费，若未传递则默认为0
             order.setPackingFee(orderDTO.getPackingFee() != null ? orderDTO.getPackingFee() : BigDecimal.ZERO);
 
-            // 总金额（如果前端没传 totalAmount，则服务器自动计算）
+            // 计算总金额：若前端未传递totalAmount，则后端计算
             if (orderDTO.getTotalAmount() == null) {
                 BigDecimal itemsTotal = items.stream()
                         .map(i -> i.getDishPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
@@ -75,6 +81,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 order.setTotalAmount(orderDTO.getTotalAmount());
             }
 
+            // 插入订单到数据库
             orderMapper.insert(order);
 
             // 保存订单项
@@ -87,20 +94,17 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 return oi;
             }).collect(Collectors.toList());
 
+            // 批量插入订单项
             for (OrderItem item : orderItems) {
                 orderItemMapper.insert(item);
             }
 
-            /** -------------------------------
-             *  精准删除购物车（只删下单的菜品）
-             * -------------------------------*/
+            // 从购物车中删除已下单的菜品
             for (OrderRequest.OrderItemRequest item : items) {
                 cartService.removeFromCart(order.getUserId(), order.getRestaurantId(), item.getDishId());
             }
 
-            /** -------------------------------
-             *  更新用户统计信息
-             * -------------------------------*/
+            // 更新用户统计信息：订单数和总消费金额
             UserStats stats = userStatsService.getOne(
                     new LambdaQueryWrapper<UserStats>().eq(UserStats::getUserId, order.getUserId())
             );
@@ -119,47 +123,60 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 userStatsService.updateById(stats);
             }
 
+            // 返回订单创建成功的结果
             return Result.success(order);
 
         } catch (Exception e) {
+            // 异常处理，返回错误信息
             return Result.error("创建订单失败: " + e.getMessage());
         }
     }
 
-
-    /** 多餐厅批量创建订单 */
+    /**
+     * 批量创建多餐厅订单
+     * @param list 批量订单请求列表
+     * @return 创建结果，包含所有订单详细信息
+     */
     @Override
     @Transactional
     public Result<List<Order>> createBatchOrders(List<OrderController.BatchOrderRequest.SingleOrderRequest> list) {
         try {
             List<Order> orders = new ArrayList<>();
 
+            // 为每个订单请求创建订单
             for (OrderController.BatchOrderRequest.SingleOrderRequest req : list) {
                 OrderRequest.OrderDTO orderDTO = req.getOrder();
                 List<OrderRequest.OrderItemRequest> items = req.getItems();
 
                 Result<Order> result = createOrder(orderDTO, items);
 
+                // 若创建失败，抛出异常
                 if (result.getCode() != 200) {
                     throw new RuntimeException("创建订单失败: " + result.getMessage());
                 }
 
                 orders.add(result.getData());
 
-                /** 精准删除购物车指定菜品 */
+                // 精确删除购物车中的菜品
                 for (OrderRequest.OrderItemRequest item : items) {
                     cartService.removeFromCart(orderDTO.getUserId(), orderDTO.getRestaurantId(), item.getDishId());
                 }
             }
 
+            // 返回批量创建订单的成功结果
             return Result.success(orders);
 
         } catch (Exception e) {
+            // 异常处理，返回错误信息
             return Result.error("批量创建订单失败: " + e.getMessage());
         }
     }
 
-
+    /**
+     * 获取用户的订单列表
+     * @param userId 用户ID
+     * @return 用户订单列表
+     */
     @Override
     public Result<List<Order>> getUserOrders(Long userId) {
         try {
@@ -170,7 +187,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
-
+    /**
+     * 获取订单详情
+     * @param orderId 订单ID
+     * @return 订单详情
+     */
     @Override
     public Result<Order> getOrderDetail(Long orderId) {
         try {
@@ -182,8 +203,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
-
-    /** 获取订单完整详情（含菜品图片） */
+    /**
+     * 获取订单完整详情（包含菜品图片等信息）
+     * @param orderId 订单ID
+     * @return 订单详细信息
+     */
     @Override
     public Result<Map<String, Object>> getOrderFullDetail(Long orderId) {
         try {
@@ -212,7 +236,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
-
+    /**
+     * 更新订单状态
+     * @param orderId 订单ID
+     * @param status 新的订单状态
+     * @return 更新结果
+     */
     @Override
     public Result<String> updateOrderStatus(Long orderId, Integer status) {
         try {
@@ -224,8 +253,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
-
-    /** 模拟支付 */
+    /**
+     * 模拟微信支付
+     * @param orderId 订单ID
+     * @return 支付结果
+     */
     @Override
     @Transactional
     public Result<String> simulateWechatPay(Long orderId) {
@@ -251,8 +283,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
-
-    /** 取消支付 */
+    /**
+     * 取消支付
+     * @param orderId 订单ID
+     * @return 取消支付结果
+     */
     @Override
     @Transactional
     public Result<String> cancelPayment(Long orderId) {
@@ -270,8 +305,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
-
-    /** 取消订单 */
+    /**
+     * 取消订单
+     * @param orderId 订单ID
+     * @return 取消订单结果
+     */
     @Override
     @Transactional
     public Result<String> cancelOrder(Long orderId) {
@@ -292,7 +330,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
-
+    /**
+     * 根据订单号查询订单
+     * @param orderNumber 订单号
+     * @return 订单查询结果
+     */
     @Override
     public Result<Order> getOrderByNumber(String orderNumber) {
         try {
@@ -304,8 +346,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
-
-    /** 用户完整订单列表 */
+    /**
+     * 获取用户完整的订单列表（含餐厅信息、订单项等）
+     * @param userId 用户ID
+     * @return 用户完整订单列表
+     */
     @Override
     public Result<List<Map<String, Object>>> getUserOrderList(Long userId) {
         try {
@@ -342,6 +387,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
+    /**
+     * 根据订单状态获取订单状态的文本表示
+     * @param status 订单状态
+     * @return 状态文本
+     */
     private String getStatusText(Integer status) {
         switch (status) {
             case 1: return "待支付";
@@ -355,6 +405,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
+    /**
+     * 搜索订单（按餐厅、菜品等关键字）
+     * @param userId 用户ID
+     * @param keyword 搜索关键字
+     * @return 搜索结果
+     */
     @Override
     public Result<List<Map<String, Object>>> searchOrders(Long userId, String keyword) {
 
@@ -363,12 +419,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         for (Map<String, Object> map : baseList) {
             Long orderId = ((Number) map.get("orderId")).longValue();
 
-            // 查完整菜品
+            // 查找完整的菜品信息
             List<OrderItem> items = orderItemMapper.selectByOrderIdWithDishInfo(orderId);
 
             map.put("items", items);
 
-            // 对标前端字段
+            // 计算总菜品数量
             int totalQuantity = items.stream()
                     .mapToInt(OrderItem::getQuantity)
                     .sum();
@@ -380,6 +436,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return Result.success(baseList);
     }
 
+    /**
+     * 获取后台分页订单列表
+     * @param pageNum 当前页
+     * @param pageSize 每页大小
+     * @param restaurantId 餐厅ID
+     * @param status 订单状态
+     * @param keyword 搜索关键字
+     * @return 订单分页列表
+     */
     @Override
     public Page<Order> getAdminOrderPage(int pageNum, int pageSize, Long restaurantId, Integer status, String keyword) {
 
@@ -387,10 +452,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         LambdaQueryWrapper<Order> qw = new LambdaQueryWrapper<>();
 
+        // 过滤餐厅ID
         if (restaurantId != null) {
             qw.eq(Order::getRestaurantId, restaurantId);
         }
 
+        // 过滤订单状态
         if (status != null) {
             try {
                 status = Integer.valueOf(status + "");
@@ -399,6 +466,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             qw.eq(Order::getStatus, status);
         }
 
+        // 关键字模糊搜索
         if (keyword != null && !keyword.isEmpty()) {
             qw.and(w -> w.like(Order::getOrderNumber, keyword));
         }
@@ -408,17 +476,22 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return orderMapper.selectPage(page, qw);
     }
 
+    /**
+     * 获取厨房订单列表
+     * @param restaurantId 餐厅ID
+     * @return 厨房订单列表
+     */
     @Override
     public Result<?> getKitchenOrderList(Long restaurantId) {
 
         LambdaQueryWrapper<Order> qw = new LambdaQueryWrapper<>();
 
-        //  只有不为 null 时才按餐厅过滤
+        // 只有不为null时才按餐厅过滤
         if (restaurantId != null) {
             qw.eq(Order::getRestaurantId, restaurantId);
         }
 
-        // 只看待处理 + 制作中
+        // 只看待处理和制作中的订单
         qw.in(Order::getStatus, Arrays.asList(2, 3));
         qw.orderByAsc(Order::getStatus)
                 .orderByDesc(Order::getCreatedTime);
@@ -433,6 +506,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return Result.success(orders);
     }
 
+    /**
+     * 用户申请退款（订单状态变为退款中）
+     * @param orderId 订单ID
+     * @param reason 退款原因
+     * @param remark 退款备注
+     * @return 退款申请结果
+     */
     @Override
     public Result<String> requestRefund(Long orderId, String reason, String remark) {
 
@@ -454,32 +534,43 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 remark
         );
 
-        // 更新订单状态 → 6 = 退款中
+        // 更新订单状态为退款中
         orderMapper.updateOrderStatusOnly(orderId, 6);
 
         return Result.success("退款申请已提交");
     }
 
+    /**
+     * 后台审核并同意退款申请（将订单状态更新为已退款）
+     * @param orderId 订单ID
+     * @return 同意退款的操作结果
+     */
     @Override
     public Result<String> approveRefund(Long orderId) {
 
+        // 调用退款服务，更新退款记录为已同意
         refundService.approveRefund(orderId);
 
-        // 退款成功 → 7
+        // 退款成功后，将订单状态更新为已退款（状态码 7）
         orderMapper.updateOrderStatusOnly(orderId, 7);
 
+        // 返回操作成功的信息
         return Result.success("退款已同意");
     }
 
+    /**
+     * 后台拒绝退款申请（将订单恢复为原始状态）
+     * @param orderId 订单ID
+     * @return 拒绝退款的操作结果
+     */
     @Override
     public Result<String> rejectRefund(Long orderId) {
 
-        // refundService 内部会恢复 previous_status
+        // 调用退款服务，恢复订单的原始状态
+        // refundService 内部会恢复订单的 previous_status
         refundService.rejectRefund(orderId);
 
+        // 返回操作成功的信息
         return Result.success("退款已拒绝");
     }
-
-
-
 }

@@ -8,11 +8,18 @@ import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
+/**
+ * 餐厅数据访问接口（Mapper），提供对 restaurant 表的操作。
+ * 包括获取所有餐厅、按分类查询餐厅、搜索餐厅等功能。
+ */
 @Mapper
 public interface RestaurantMapper extends BaseMapper<Restaurant> {
 
     /**
-     * 获取营业中的餐厅
+     * 获取所有营业中的餐厅。
+     * 只返回状态为1（营业中的餐厅），按餐厅ID升序排列。
+     *
+     * @return 返回所有营业中的餐厅列表
      */
     @Select(
             "SELECT id, name, description, contact_phone, logo_url, address, status, " +
@@ -26,7 +33,10 @@ public interface RestaurantMapper extends BaseMapper<Restaurant> {
 
 
     /**
-     * 获取所有餐厅（完整字段）
+     * 获取所有餐厅的完整信息。
+     * 返回所有餐厅的信息，按餐厅ID升序排列。
+     *
+     * @return 返回所有餐厅的完整列表
      */
     @Select(
             "SELECT id, name, description, contact_phone, logo_url, address, status, " +
@@ -39,7 +49,11 @@ public interface RestaurantMapper extends BaseMapper<Restaurant> {
 
 
     /**
-     * 按分类查询餐厅
+     * 根据餐厅分类ID查询餐厅。
+     * 根据餐厅的分类类型（category_type）过滤餐厅，并按餐厅ID升序排列。
+     *
+     * @param categoryId 分类ID
+     * @return 返回该分类下的餐厅列表
      */
     @Select(
             "SELECT id, name, description, contact_phone, logo_url, address, status, " +
@@ -53,12 +67,20 @@ public interface RestaurantMapper extends BaseMapper<Restaurant> {
 
 
     /**
-     * 搜索餐厅（按名称 / 描述）
+     * 搜索餐厅，支持按餐厅名称或描述进行搜索。
+     * 根据关键词（keyword）搜索餐厅的名称或描述，返回餐厅列表。
+     *
+     * @param keyword 搜索关键词
+     * @return 返回匹配的餐厅列表
      */
     List<Restaurant> searchRestaurant(@Param("keyword") String keyword);
 
     /**
-     * 实时联想搜索（返回 id + name）
+     * 实时联想搜索餐厅，返回餐厅的ID和名称。
+     * 根据关键词（keyword）返回餐厅名称匹配的结果，最多返回8条数据。
+     *
+     * @param keyword 搜索关键词
+     * @return 返回匹配的餐厅ID和名称列表（最多8个结果）
      */
     List<Restaurant> suggestRestaurant(@Param("keyword") String keyword);
 }

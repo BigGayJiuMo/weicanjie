@@ -4,7 +4,7 @@
 
 <mapper namespace="com.jiumo.weicanjie.mapper.UserHistoryMapper">
 
-    <!-- 查询带餐厅信息 -->
+    <!-- 查询用户最近的浏览历史，并关联餐厅信息 -->
     <select id="selectRecentHistory" resultType="com.jiumo.weicanjie.entity.UserHistory">
         SELECT
             h.id,
