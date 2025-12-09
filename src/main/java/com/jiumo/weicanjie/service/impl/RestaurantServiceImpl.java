@@ -6,11 +6,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.*;
 import com.jiumo.weicanjie.mapper.*;
+import com.jiumo.weicanjie.service.RestaurantBusinessHoursService;
 import com.jiumo.weicanjie.service.RestaurantService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +41,8 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     private RestaurantImageMapper restaurantImageMapper;
 
     @Autowired
+    private RestaurantBusinessHoursService restaurantBusinessHoursService;
+    @Autowired
     private RestaurantBusinessHoursMapper restaurantBusinessHoursMapper;
 
     @Autowired
@@ -51,6 +57,8 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     public Result<List<Restaurant>> getActiveRestaurants() {
         try {
             List<Restaurant> restaurants = restaurantMapper.selectActiveRestaurants();
+            // 为每个餐厅加载营业时间并计算状态
+            restaurants.forEach(this::loadAndCalculateBusinessStatus);
             return Result.success(restaurants);
         } catch (Exception e) {
             log.error("获取营业餐厅列表异常", e);
@@ -67,17 +75,16 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     @Override
     public Result<Restaurant> getRestaurantDetail(Long id) {
         try {
-            // 1. 查询餐厅基本信息
+            // 查询餐厅基本信息
             Restaurant restaurant = restaurantMapper.selectById(id);
             if (restaurant == null) {
                 return Result.error("餐厅不存在");
             }
 
-            // 2. 获取营业时间
-            List<RestaurantBusinessHours> restaurantBusinessHours = restaurantBusinessHoursMapper.selectByRestaurantId(id);
-            restaurant.setRestaurantBusinessHours(restaurantBusinessHours);
+            // 加载营业时间并计算状态
+            loadAndCalculateBusinessStatus(restaurant);
 
-            // 3. 获取菜品分类及菜品
+            // 获取餐厅的分类和菜品
             List<DishCategory> categories = dishCategoryMapper.selectByRestaurantId(id);
             for (DishCategory category : categories) {
                 List<Dish> dishes = dishMapper.selectByCategoryId(category.getId());
@@ -85,7 +92,7 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             }
             restaurant.setCategories(categories);
 
-            // 4. 获取餐厅展示图片
+            // 获取餐厅的展示图片
             List<String> images = restaurantImageMapper.selectImagesByRestaurantId(id);
             restaurant.setShopImages(images);
 
@@ -96,6 +103,75 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         }
     }
 
+    private void loadAndCalculateBusinessStatus(Restaurant restaurant) {
+        if (restaurant == null) return;
+
+        // 获取餐厅的营业时间
+        List<RestaurantBusinessHours> businessHours = restaurantBusinessHoursMapper.selectByRestaurantId(restaurant.getId());
+        restaurant.setRestaurantBusinessHours(businessHours);
+
+        // 计算营业状态
+        calculateBusinessStatus(restaurant);
+    }
+
+    private void calculateBusinessStatus(Restaurant restaurant) {
+        String statusText = "营业状态未知";
+        String statusClass = "status-closed"; // 默认状态是关闭
+
+        // 获取餐厅营业时间信息
+        List<RestaurantBusinessHours> businessHours = restaurant.getRestaurantBusinessHours();
+
+        if (businessHours != null && !businessHours.isEmpty()) {
+            // 获取今天的星期几（1=星期一，7=星期日）
+            int today = LocalDate.now().getDayOfWeek().getValue();
+
+            // 找到今天的营业时间
+            RestaurantBusinessHours todayHours = businessHours.stream()
+                    .filter(hours -> hours.getDayOfWeek() == today)
+                    .findFirst()
+                    .orElse(null);
+
+            if (todayHours != null && todayHours.getIsOpen() == 1) {
+                LocalTime openTime = todayHours.getOpenTime();
+                LocalTime closeTime = todayHours.getCloseTime();
+                LocalTime now = LocalTime.now();
+
+                // 判断是否跨天营业（如23:00-02:00）
+                if (closeTime.isBefore(openTime)) {
+                    // 跨天营业：判断当前时间是否在营业时间内
+                    if (now.isAfter(openTime) || now.isBefore(closeTime)) {
+                        statusText = "营业中";
+                        statusClass = "status-open";
+                    } else {
+                        statusText = "已打烊";
+                        statusClass = "status-closed";
+                    }
+                } else {
+                    // 非跨天营业
+                    if (now.isBefore(openTime)) {
+                        statusText = "未营业";
+                        statusClass = "status-break";
+                    } else if (now.isAfter(closeTime)) {
+                        statusText = "已打烊";
+                        statusClass = "status-closed";
+                    } else {
+                        statusText = "营业中";
+                        statusClass = "status-open";
+                    }
+                }
+            } else {
+                statusText = "今日不营业";
+                statusClass = "status-closed";
+            }
+        }
+
+        // 将状态文本和状态类传递给前端
+        restaurant.setBusinessStatusText(statusText);
+        restaurant.setBusinessStatusClass(statusClass);
+    }
+
+
+
     /**
      * 获取所有餐厅的列表
      *
@@ -105,6 +181,10 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     public Result<List<Restaurant>> getAllRestaurants() {
         try {
             List<Restaurant> restaurants = restaurantMapper.selectAllRestaurants();
+
+            // 遍历餐厅列表，为每个餐厅加载营业时间并计算状态
+            restaurants.forEach(this::loadAndCalculateBusinessStatus);
+
             return Result.success(restaurants);
         } catch (Exception e) {
             log.error("获取所有餐厅列表异常", e);
@@ -122,6 +202,8 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     public Result<List<Restaurant>> getByCategory(Integer categoryId) {
         try {
             List<Restaurant> list = restaurantMapper.selectByCategory(categoryId);
+            // 为每个餐厅加载营业时间并计算状态
+            list.forEach(this::loadAndCalculateBusinessStatus);
             return Result.success(list);
         } catch (Exception e) {
             log.error("按分类查询餐厅失败", e);
@@ -143,6 +225,8 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             }
 
             List<Restaurant> list = restaurantMapper.searchRestaurant(keyword);
+            // 为每个餐厅加载营业时间并计算状态
+            list.forEach(this::loadAndCalculateBusinessStatus);
             return Result.success(list);
         } catch (Exception e) {
             log.error("搜索餐厅失败", e);
@@ -164,12 +248,15 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             }
 
             List<Restaurant> list = restaurantMapper.suggestRestaurant(keyword);
+            // 为每个餐厅加载营业时间并计算状态
+            list.forEach(this::loadAndCalculateBusinessStatus);
             return Result.success(list);
         } catch (Exception e) {
             log.error("联想搜索失败", e);
             return Result.error("联想搜索失败: " + e.getMessage());
         }
     }
+
 
     /**
      * 获取餐厅的分页列表，可以根据关键字进行筛选
@@ -191,6 +278,9 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         qw.orderByDesc("id");
 
         Page<Restaurant> result = restaurantMapper.selectPage(page, qw);
+
+        // 为分页结果中的每个餐厅加载营业时间并计算状态
+        result.getRecords().forEach(this::loadAndCalculateBusinessStatus);
 
         return Result.success(result);
     }

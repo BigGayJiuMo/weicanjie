@@ -49,4 +49,11 @@ public class Restaurant {
 
     @TableField(exist = false)
     private List<String> shopImages;  // 商家展示图片
+
+    // 新增字段用于保存营业状态文本和样式
+    @TableField(exist = false)
+    private String businessStatusText;  // 显示营业状态文本
+
+    @TableField(exist = false)
+    private String businessStatusClass;  // 显示营业状态的CSS类
 }
