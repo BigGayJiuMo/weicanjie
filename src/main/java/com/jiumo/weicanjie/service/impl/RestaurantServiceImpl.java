@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 餐厅服务实现类，提供餐厅相关业务逻辑的实现。
@@ -57,6 +58,12 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     public Result<List<Restaurant>> getActiveRestaurants() {
         try {
             List<Restaurant> restaurants = restaurantMapper.selectActiveRestaurants();
+
+            //  添加过滤：移除 status=0 的餐厅
+            restaurants = restaurants.stream()
+                    .filter(r -> r.getStatus() != null && r.getStatus() != 0)
+                    .collect(Collectors.toList());
+
             // 为每个餐厅加载营业时间并计算状态
             restaurants.forEach(this::loadAndCalculateBusinessStatus);
             return Result.success(restaurants);
@@ -79,6 +86,11 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             Restaurant restaurant = restaurantMapper.selectById(id);
             if (restaurant == null) {
                 return Result.error("餐厅不存在");
+            }
+
+            // 检查餐厅状态，如果 status=0 则不显示
+            if (restaurant.getStatus() != null && restaurant.getStatus() == 0) {
+                return Result.error("餐厅已下架");
             }
 
             // 加载营业时间并计算状态
@@ -170,8 +182,6 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         restaurant.setBusinessStatusClass(statusClass);
     }
 
-
-
     /**
      * 获取所有餐厅的列表
      *
@@ -181,6 +191,11 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     public Result<List<Restaurant>> getAllRestaurants() {
         try {
             List<Restaurant> restaurants = restaurantMapper.selectAllRestaurants();
+
+            //  添加过滤：移除 status=0 的餐厅
+            restaurants = restaurants.stream()
+                    .filter(r -> r.getStatus() != null && r.getStatus() != 0)
+                    .collect(Collectors.toList());
 
             // 遍历餐厅列表，为每个餐厅加载营业时间并计算状态
             restaurants.forEach(this::loadAndCalculateBusinessStatus);
@@ -202,6 +217,12 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     public Result<List<Restaurant>> getByCategory(Integer categoryId) {
         try {
             List<Restaurant> list = restaurantMapper.selectByCategory(categoryId);
+
+            //  添加过滤：移除 status=0 的餐厅
+            list = list.stream()
+                    .filter(r -> r.getStatus() != null && r.getStatus() != 0)
+                    .collect(Collectors.toList());
+
             // 为每个餐厅加载营业时间并计算状态
             list.forEach(this::loadAndCalculateBusinessStatus);
             return Result.success(list);
@@ -225,6 +246,12 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             }
 
             List<Restaurant> list = restaurantMapper.searchRestaurant(keyword);
+
+            //  添加过滤：移除 status=0 的餐厅
+            list = list.stream()
+                    .filter(r -> r.getStatus() != null && r.getStatus() != 0)
+                    .collect(Collectors.toList());
+
             // 为每个餐厅加载营业时间并计算状态
             list.forEach(this::loadAndCalculateBusinessStatus);
             return Result.success(list);
@@ -248,6 +275,12 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             }
 
             List<Restaurant> list = restaurantMapper.suggestRestaurant(keyword);
+
+            //  添加过滤：移除 status=0 的餐厅
+            list = list.stream()
+                    .filter(r -> r.getStatus() != null && r.getStatus() != 0)
+                    .collect(Collectors.toList());
+
             // 为每个餐厅加载营业时间并计算状态
             list.forEach(this::loadAndCalculateBusinessStatus);
             return Result.success(list);

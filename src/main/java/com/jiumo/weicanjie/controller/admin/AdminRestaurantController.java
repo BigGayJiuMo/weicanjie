@@ -116,6 +116,7 @@ public class AdminRestaurantController {
             return Result.error("后厨账号无权限修改餐厅信息");
         }
 
+        // 确保使用的是 status 字段，而不是 businessStatus
         return restaurantService.updateById(r)
                 ? Result.success("更新成功")
                 : Result.error("更新失败");
@@ -153,12 +154,10 @@ public class AdminRestaurantController {
         String role = (String) request.getAttribute("role");
         Long rid = (Long) request.getAttribute("restaurantId");
 
-        // 商家只能切换自己餐厅的营业状态
         if ("merchant".equals(role) && !rid.equals(id)) {
             return Result.error("不能操作别家餐厅营业状态");
         }
 
-        // 后厨账号无法修改餐厅营业状态
         if ("kitchen".equals(role)) {
             return Result.error("后厨账号无法修改营业状态");
         }
@@ -166,10 +165,12 @@ public class AdminRestaurantController {
         Restaurant r = restaurantService.getById(id);
         if (r == null) return Result.error("餐厅不存在");
 
-        r.setBusinessStatus((r.getBusinessStatus() != null && r.getBusinessStatus() == 1) ? 0 : 1);
+        // 修改 status 字段而不是 businessStatus
+        r.setStatus((r.getStatus() != null && r.getStatus() == 1) ? 0 : 1);
         restaurantService.updateById(r);
         return Result.success("已切换状态");
     }
+
 
     /**
      * 获取餐厅图片列表
