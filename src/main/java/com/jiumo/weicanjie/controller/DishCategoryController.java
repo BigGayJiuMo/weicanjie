@@ -16,7 +16,10 @@ public class DishCategoryController {
     private DishCategoryService dishCategoryService;
 
     /**
-     * 根据餐厅ID获取分类列表
+     * 根据餐厅ID获取该餐厅的所有菜品分类列表
+     *
+     * @param restaurantId 餐厅ID
+     * @return 返回餐厅的所有菜品分类列表
      */
     @GetMapping("/restaurant/{restaurantId}")
     public Result<List<DishCategory>> getCategoriesByRestaurant(@PathVariable Long restaurantId) {
@@ -24,7 +27,10 @@ public class DishCategoryController {
     }
 
     /**
-     * 获取分类及菜品列表
+     * 获取餐厅的所有菜品分类及其对应的菜品列表
+     *
+     * @param restaurantId 餐厅ID
+     * @return 返回餐厅的菜品分类及其包含的菜品信息
      */
     @GetMapping("/with-dishes/{restaurantId}")
     public Result<List<DishCategory>> getCategoriesWithDishes(@PathVariable Long restaurantId) {

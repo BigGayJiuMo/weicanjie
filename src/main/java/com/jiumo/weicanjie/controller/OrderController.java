@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 订单管理控制器
+ * 该控制器提供订单的创建、查询、支付、取消等功能。
+ */
 @RestController
 @RequestMapping("/order")
 public class OrderController {
@@ -19,7 +23,12 @@ public class OrderController {
     private OrderService orderService;
 
     /**
-     * 创建订单
+     * 创建单个订单
+     *
+     * 该接口用于创建一个新的订单，包含订单本身和相关的订单项（如菜品和数量）。
+     *
+     * @param request 订单请求对象，包含订单和订单项的信息
+     * @return 返回创建的订单信息
      */
     @PostMapping("/create")
     public Result<Order> createOrder(@RequestBody OrderRequest request) {
@@ -28,6 +37,11 @@ public class OrderController {
 
     /**
      * 批量创建订单
+     *
+     * 该接口用于批量创建多个订单，通常用于商家同时处理多个餐厅的订单。
+     *
+     * @param request 批量订单请求对象，包含多个餐厅的订单信息
+     * @return 返回批量创建的订单列表
      */
     @PostMapping("/create/batch")
     public Result<List<Order>> createBatchOrders(@RequestBody BatchOrderRequest request) {
@@ -35,7 +49,12 @@ public class OrderController {
     }
 
     /**
-     * 获取用户订单列表
+     * 获取用户的所有订单列表
+     *
+     * 该接口用于根据用户ID查询该用户的所有订单。
+     *
+     * @param userId 用户ID
+     * @return 返回用户的所有订单列表
      */
     @GetMapping("/user/{userId}")
     public Result<List<Order>> getUserOrders(@PathVariable Long userId) {
@@ -43,7 +62,12 @@ public class OrderController {
     }
 
     /**
-     * 获取订单详情
+     * 获取指定订单的详细信息
+     *
+     * 该接口用于根据订单ID查询订单的详细信息。
+     *
+     * @param orderId 订单ID
+     * @return 返回指定订单的详细信息
      */
     @GetMapping("/{orderId}")
     public Result<Order> getOrderDetail(@PathVariable Long orderId) {
@@ -51,7 +75,12 @@ public class OrderController {
     }
 
     /**
-     * 获取订单完整详情（包含餐厅、订单项等完整信息）
+     * 获取订单的完整详情，包括餐厅和订单项等完整信息
+     *
+     * 该接口用于查询订单的详细信息，包括餐厅、菜品等所有相关信息。
+     *
+     * @param orderId 订单ID
+     * @return 返回订单的完整详情信息
      */
     @GetMapping("/detail/{orderId}")
     public Result<Map<String, Object>> getOrderFullDetail(@PathVariable Long orderId) {
@@ -59,7 +88,12 @@ public class OrderController {
     }
 
     /**
-     * 模拟微信支付
+     * 模拟微信支付接口
+     *
+     * 该接口用于模拟微信支付过程（可用于测试阶段），实际支付逻辑由微信支付SDK处理。
+     *
+     * @param orderId 订单ID
+     * @return 返回支付操作的结果
      */
     @PostMapping("/pay/{orderId}")
     public Result<String> simulateWechatPay(@PathVariable Long orderId) {
@@ -67,8 +101,12 @@ public class OrderController {
     }
 
     /**
-     * 取消订单（包括：待支付、待处理）
-     * 前端调用：/order/cancel/{orderId}
+     * 取消订单
+     *
+     * 该接口用于取消未支付或未处理的订单。
+     *
+     * @param orderId 订单ID
+     * @return 返回取消操作的结果
      */
     @PostMapping("/cancel/{orderId}")
     public Result<String> cancelOrder(@PathVariable Long orderId) {
@@ -76,8 +114,12 @@ public class OrderController {
     }
 
     /**
-     * 如果你以后真要做“取消支付”这个概念，
-     * 可以留一个单独的接口（可选）
+     * 取消支付（可选接口）
+     *
+     * 该接口用于取消已经支付的订单的支付状态。此接口目前为可选功能，实际使用时可根据需求决定是否启用。
+     *
+     * @param orderId 订单ID
+     * @return 返回取消支付操作的结果
      */
     @PostMapping("/cancelPayment/{orderId}")
     public Result<String> cancelPayment(@PathVariable Long orderId) {
@@ -86,6 +128,11 @@ public class OrderController {
 
     /**
      * 根据订单号查询订单
+     *
+     * 该接口用于根据订单号查询订单的详细信息。
+     *
+     * @param orderNumber 订单号
+     * @return 返回订单信息
      */
     @GetMapping("/number/{orderNumber}")
     public Result<Order> getOrderByNumber(@PathVariable String orderNumber) {
@@ -93,7 +140,12 @@ public class OrderController {
     }
 
     /**
-     * 获取用户完整订单列表（带餐厅 + 菜品）
+     * 获取用户的完整订单列表（包括餐厅和菜品信息）
+     *
+     * 该接口用于获取用户的所有订单，并返回每个订单对应的餐厅和菜品信息。
+     *
+     * @param userId 用户ID
+     * @return 返回用户的完整订单列表
      */
     @GetMapping("/list/{userId}")
     public Result<List<Map<String, Object>>> getUserOrderList(@PathVariable Long userId) {
@@ -101,7 +153,13 @@ public class OrderController {
     }
 
     /**
-     * 搜索订单（按餐厅/菜品）
+     * 搜索订单（按餐厅/菜品关键词）
+     *
+     * 该接口用于根据用户ID和搜索关键词（餐厅名或菜品名）查询订单。
+     *
+     * @param userId 用户ID
+     * @param keyword 搜索关键词（餐厅名或菜品名）
+     * @return 返回符合条件的订单列表
      */
     @GetMapping("/search")
     public Result<List<Map<String, Object>>> searchOrders(
@@ -110,12 +168,27 @@ public class OrderController {
         return orderService.searchOrders(userId, keyword);
     }
 
-    /** 用户申请退款 */
+    /**
+     * 用户申请退款
+     *
+     * 该接口用于用户对订单申请退款，并附带退款原因和备注信息。
+     *
+     * @param req 退款申请请求对象，包含订单ID、退款原因和备注
+     * @return 返回退款申请的处理结果
+     */
     @PostMapping("/refund/apply")
     public Result<String> applyRefund(@RequestBody RefundApplyRequest req) {
         return orderService.requestRefund(req.getOrderId(), req.getReason(), req.getRemark());
     }
 
+    /**
+     * 更新订单备注
+     *
+     * 该接口用于更新订单的备注信息，供商家或管理员使用。
+     *
+     * @param req 请求对象，包含订单ID和备注信息
+     * @return 返回更新结果
+     */
     @PostMapping("/updateRemark")
     public Result<?> updateRemark(@RequestBody Map<String, Object> req) {
         Long orderId = Long.valueOf(req.get("orderId").toString());
@@ -132,20 +205,19 @@ public class OrderController {
 
     @Data
     public static class RefundApplyRequest {
-        private Long orderId;
-        private String reason;
-        private String remark;
+        private Long orderId;  // 订单ID
+        private String reason; // 退款原因
+        private String remark; // 退款备注
     }
 
     @Data
     public static class BatchOrderRequest {
-        private List<SingleOrderRequest> restaurants;
+        private List<SingleOrderRequest> restaurants; // 批量订单请求，包含多个餐厅的订单
 
         @Data
         public static class SingleOrderRequest {
-            private OrderRequest.OrderDTO order;
-            private List<OrderRequest.OrderItemRequest> items;
+            private OrderRequest.OrderDTO order; // 订单对象
+            private List<OrderRequest.OrderItemRequest> items; // 订单项列表
         }
     }
-
 }

@@ -6,6 +6,10 @@ import com.jiumo.weicanjie.service.UserFavoriteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 用户收藏管理控制器
+ * 该控制器提供用户餐厅收藏的相关操作，如添加、取消收藏、查询收藏状态及获取用户收藏的餐厅列表。
+ */
 @RestController
 @RequestMapping("/favorite")
 public class UserFavoriteController {
@@ -15,6 +19,11 @@ public class UserFavoriteController {
 
     /**
      * 添加餐厅收藏
+     *
+     * 该接口用于将指定餐厅添加到用户的收藏列表。
+     *
+     * @param req 包含用户ID和餐厅ID的收藏请求对象
+     * @return 返回操作结果，成功时返回“添加成功”，失败时返回错误信息
      */
     @PostMapping("/add")
     public Result<String> addFavorite(@RequestBody UserFavorite req) {
@@ -26,6 +35,11 @@ public class UserFavoriteController {
 
     /**
      * 取消餐厅收藏
+     *
+     * 该接口用于将指定餐厅从用户的收藏列表中移除。
+     *
+     * @param req 包含用户ID和餐厅ID的请求对象
+     * @return 返回操作结果，成功时返回“移除成功”，失败时返回错误信息
      */
     @PostMapping("/remove")
     public Result<String> removeFavorite(@RequestBody UserFavorite req) {
@@ -36,7 +50,13 @@ public class UserFavoriteController {
     }
 
     /**
-     * 查询是否已收藏
+     * 查询是否已收藏指定餐厅
+     *
+     * 该接口用于检查指定用户是否已收藏某个餐厅。
+     *
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @return 返回是否已收藏该餐厅的布尔值
      */
     @GetMapping("/check")
     public Result<Boolean> checkFavorite(
@@ -49,6 +69,11 @@ public class UserFavoriteController {
 
     /**
      * 获取用户收藏的餐厅列表
+     *
+     * 该接口用于查询用户收藏的所有餐厅。
+     *
+     * @param userId 用户ID
+     * @return 返回用户收藏的餐厅列表
      */
     @GetMapping("/list")
     public Result<Object> listFavorites(@RequestParam Long userId) {

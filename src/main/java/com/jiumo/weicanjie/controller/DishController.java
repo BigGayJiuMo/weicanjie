@@ -16,6 +16,14 @@ public class DishController {
     @Autowired
     private DishService dishService;
 
+    /**
+     * 根据菜品ID获取菜品详情
+     *
+     * 该接口用于获取指定菜品的详细信息，包括名称、价格、描述等。
+     *
+     * @param id 菜品ID
+     * @return 返回菜品的详细信息
+     */
     @GetMapping("/detail/{id}")
     public Result<Dish> getDishDetail(@PathVariable Long id) {
         return dishService.getById(id);

@@ -22,6 +22,7 @@ public class CartController {
     private final RestaurantService restaurantService;
     private final DishService dishService;
 
+    // 构造函数，注入所需的服务类
     @Autowired
     public CartController(CartService cartService, RestaurantService restaurantService, DishService dishService) {
         this.cartService = cartService;
@@ -29,12 +30,18 @@ public class CartController {
         this.dishService = dishService;
     }
 
-    // 获取用户购物车列表
+    /**
+     * 获取用户的购物车列表，并填充每个购物车项的餐厅信息和菜品信息
+     * @param userId 用户ID
+     * @return 包含购物车项的列表
+     */
     @GetMapping("/user/{userId}/list")
     public Result<List<Cart>> getUserCartList(@PathVariable("userId") Long userId) {
         try {
+            // 调用服务获取购物车列表
             Result<List<Cart>> result = cartService.getUserCartList(userId);
 
+            // 如果购物车列表获取成功
             if (result.getCode() == 200 && result.getData() != null) {
                 List<Cart> cartList = result.getData();
 
@@ -75,7 +82,10 @@ public class CartController {
     }
 
     /**
-     * 获取用户购物车映射
+     * 获取指定用户在指定餐厅的购物车商品映射
+     * @param userId 用户ID
+     * @param restaurantId 餐厅ID
+     * @return 用户购物车中每个菜品及其数量的映射
      */
     @GetMapping("/map/user/{userId}/restaurant/{restaurantId}")
     public Result<Map<Long, Integer>> getCartItemMap(@PathVariable Long userId, @PathVariable Long restaurantId) {
@@ -84,6 +94,8 @@ public class CartController {
 
     /**
      * 添加商品到购物车
+     * @param cartList 购物车列表
+     * @return 操作结果
      */
     @PostMapping("/save")
     public Result<String> saveCart(@RequestBody List<Cart> cartList) {
@@ -91,7 +103,9 @@ public class CartController {
     }
 
     /**
-     * 更新购物车商品数量
+     * 更新购物车中某个商品的数量
+     * @param request 请求对象，包含用户ID、餐厅ID、菜品ID和数量
+     * @return 操作结果
      */
     @PostMapping("/update")
     public Result<String> updateCartItem(@RequestBody CartRequest request) {
@@ -99,7 +113,9 @@ public class CartController {
     }
 
     /**
-     * 从购物车移除商品
+     * 从购物车中移除指定商品
+     * @param request 请求对象，包含用户ID、餐厅ID和菜品ID
+     * @return 操作结果
      */
     @PostMapping("/remove")
     public Result<String> removeCartItem(@RequestBody CartRequest request) {
@@ -107,7 +123,9 @@ public class CartController {
     }
 
     /**
-     * 清空购物车（指定餐厅）
+     * 清空指定餐厅的购物车
+     * @param request 请求对象，包含用户ID和餐厅ID
+     * @return 操作结果
      */
     @PostMapping("/clear")
     public Result<String> clearCart(@RequestBody CartRequest request) {
@@ -116,19 +134,24 @@ public class CartController {
 
     /**
      * 删除整个餐厅的购物车
+     * @param request 请求对象，包含用户ID和餐厅ID
+     * @return 操作结果
      */
     @PostMapping("/restaurant/remove")
     public Result<String> removeRestaurantCart(@RequestBody CartRequest request) {
         return cartService.removeRestaurantCart(request.getUserId(), request.getRestaurantId());
     }
 
+    /**
+     * 请求参数类，用于包含购物车操作所需的参数
+     */
     @Data
     public static class CartRequest {
-        private Long userId;
-        private Long restaurantId;
-        private Long dishId;
-        private Integer quantity;
-        private java.math.BigDecimal price;
-        private String notes;
+        private Long userId; // 用户ID
+        private Long restaurantId; // 餐厅ID
+        private Long dishId; // 菜品ID
+        private Integer quantity; // 商品数量
+        private java.math.BigDecimal price; // 商品价格
+        private String notes; // 商品备注
     }
 }
