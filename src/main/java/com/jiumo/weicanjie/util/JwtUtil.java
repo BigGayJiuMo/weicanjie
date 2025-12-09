@@ -1,6 +1,7 @@
 package com.jiumo.weicanjie.util;
 
 import com.jiumo.weicanjie.entity.AdminUser;
+import com.jiumo.weicanjie.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -44,6 +45,24 @@ public class JwtUtil {
                 .signWith(getKey(), SignatureAlgorithm.HS256)  // 使用密钥和算法签名生成 token
                 .compact();  // 返回生成的 token
     }
+
+    /**
+     * 为普通用户生成 JWT token。
+     *
+     * @param user 普通用户信息
+     * @return 返回生成的 JWT token 字符串
+     */
+    public String createToken(User user) {
+        return Jwts.builder()
+                .claim("uid", user.getId())  // 用户 ID
+                .claim("role", "user")  // 用户角色
+                .claim("phone", user.getPhone())  // 手机号
+                .setIssuedAt(new Date())  // 设置 token 的发行时间
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000))  // 设置 token 的过期时间（1天）
+                .signWith(getKey(), SignatureAlgorithm.HS256)  // 使用密钥和算法签名生成 token
+                .compact();  // 返回生成的 token
+    }
+
 
     /**
      * 解析 JWT token 并提取 Claims。

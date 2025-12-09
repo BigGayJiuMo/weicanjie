@@ -11,6 +11,8 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -26,7 +28,7 @@ public class UserController {
      * 手机号登录（唯一入口）
      */
     @PostMapping("/loginByPhone")
-    public Result<User> loginByPhone(@RequestBody PhoneLoginRequest request) {
+    public Result<HashMap<String, Object>> loginByPhone(@RequestBody PhoneLoginRequest request) {
         return userService.loginByPhone(request.getPhone());
     }
 
@@ -67,7 +69,7 @@ public class UserController {
      * 微信登录
      */
     @PostMapping("/loginByWeChat")
-    public Result<User> loginByWeChat(@RequestBody LoginRequest request) {
+    public Result<HashMap<String, Object>> loginByWeChat(@RequestBody LoginRequest request) {
 
         return userService.loginByWeChat(
                 request.getCode(),

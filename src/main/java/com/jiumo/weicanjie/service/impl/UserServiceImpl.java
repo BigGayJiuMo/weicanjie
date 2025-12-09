@@ -8,12 +8,14 @@ import com.jiumo.weicanjie.entity.User;
 import com.jiumo.weicanjie.mapper.UserMapper;
 import com.jiumo.weicanjie.service.UserService;
 import com.jiumo.weicanjie.service.UserStatsService;
+import com.jiumo.weicanjie.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 
 @Slf4j
 @Service
@@ -21,7 +23,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private UserStatsService userStatsService;  // 注入 UserStatsService，用于用户统计的相关操作
-
+    @Autowired
+    private JwtUtil jwtUtil;
     /**
      * 手机号登录（统一入口）
      * 该方法首先校验手机号格式，若手机号未注册，则自动创建新用户，并为其创建默认的统计信息。
@@ -31,8 +34,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     @Transactional
-    public Result<User> loginByPhone(String phone) {
-
+    public Result<HashMap<String, Object>> loginByPhone(String phone) {
         // 手机号格式校验
         if (phone == null || !phone.matches("^1[3-9]\\d{9}$")) {
             return Result.error("手机号格式不正确");
@@ -42,7 +44,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = getUserByPhone(phone);
 
         if (user != null) {
-            return Result.success(user);  // 用户已存在，返回用户信息
+            // 用户已存在，生成 token
+            String token = jwtUtil.createToken(user);
+
+            // 返回 token 和用户信息
+            HashMap<String, Object> responseData = new HashMap<>();
+            responseData.put("token", token);
+            responseData.put("user", user);
+
+            return Result.success("登录成功", responseData);  // 返回用户和 token
         }
 
         // 未注册 → 自动创建新用户
@@ -61,7 +71,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 创建默认统计信息
         userStatsService.createDefaultStats(newUser.getId());
 
-        return Result.success(newUser);  // 返回新创建的用户信息
+        // 生成 token
+        String token = jwtUtil.createToken(newUser);
+
+        HashMap<String, Object> responseData = new HashMap<>();
+        responseData.put("token", token);
+        responseData.put("user", newUser);
+
+        return Result.success("注册成功", responseData);  // 返回新用户和 token
     }
 
     /**
@@ -189,17 +206,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     @Transactional
-    public Result<User> loginByWeChat(String code, LoginRequest.UserInfo userInfo) {
+    public Result<HashMap<String, Object>> loginByWeChat(String code, LoginRequest.UserInfo userInfo) {
+        // 模拟通过授权码生成 OpenID
+        String openid = "mock_openid_" + code.hashCode();
 
-        String openid = "mock_openid_" + code.hashCode();  // 模拟通过授权码生成 OpenID
-
+        // 根据 OpenID 查询用户
         User user = getUserByOpenid(openid);
 
         if (user != null) {
-            return Result.success(user);  // 微信账号已注册，返回用户信息
+            // 用户已注册，生成 token
+            String token = jwtUtil.createToken(user);
+
+            HashMap<String, Object> responseData = new HashMap<>();
+            responseData.put("token", token);
+            responseData.put("user", user);
+
+            return Result.success("登录成功", responseData);  // 返回 token 和用户信息
         }
 
-        // 创建新的微信用户
+        // 用户未注册，创建新用户
         User newUser = new User();
         newUser.setOpenid(openid);
         newUser.setNickname(userInfo != null ? userInfo.getNickname() : "微信用户");
@@ -207,11 +232,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         newUser.setCreatedTime(LocalDateTime.now());
         newUser.setUpdatedTime(LocalDateTime.now());
 
+        // 保存新用户
         save(newUser);
-        userStatsService.createDefaultStats(newUser.getId());  // 创建默认的用户统计信息
 
-        return Result.success(newUser);  // 返回新创建的用户信息
+        // 创建默认统计信息
+        userStatsService.createDefaultStats(newUser.getId());
+
+        // 生成 token
+        String token = jwtUtil.createToken(newUser);
+
+        HashMap<String, Object> responseData = new HashMap<>();
+        responseData.put("token", token);
+        responseData.put("user", newUser);
+
+        return Result.success("微信登录成功", responseData);  // 返回新创建的用户和 token
     }
+
 
     /**
      * 微信绑定

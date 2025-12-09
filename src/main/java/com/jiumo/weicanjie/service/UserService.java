@@ -5,6 +5,8 @@ import com.jiumo.weicanjie.dto.LoginRequest;
 import com.jiumo.weicanjie.entity.User;
 import com.jiumo.weicanjie.common.Result;
 
+import java.util.HashMap;
+
 /**
  * 用户服务接口，提供用户相关的业务逻辑操作。
  * 该接口继承自 MyBatis Plus 的 IService 接口，包含了对用户信息的增、查、改、删操作。
@@ -17,7 +19,7 @@ public interface UserService extends IService<User> {
      * @param phone 手机号
      * @return 返回登录的用户信息
      */
-    Result<User> loginByPhone(String phone);
+    Result<HashMap<String, Object>> loginByPhone(String phone);
 
     /**
      * 根据手机号获取用户信息
@@ -69,7 +71,7 @@ public interface UserService extends IService<User> {
      * @param userInfo 微信用户信息
      * @return 返回登录的用户信息
      */
-    Result<User> loginByWeChat(String code, LoginRequest.UserInfo userInfo);
+    Result<HashMap<String, Object>> loginByWeChat(String code, LoginRequest.UserInfo userInfo);
 
     /**
      * 微信绑定
