@@ -27,8 +27,8 @@ public class Restaurant {
     private Double avgRating;  // 餐厅平均评分
     private Integer monthlySales;  // 月销售量
     private Double packingFee;  // 打包费用
-    private Integer businessStatus;  // 餐厅营业状态（1=营业，0=停业）
-
+    private Integer businessStatus;  // 餐厅营业状态
+    private Integer manualBusinessStatus; //商家手动设置的营业状态
     @TableField("category_type")
     private Integer categoryType;  // 餐厅分类类型
 

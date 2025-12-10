@@ -123,6 +123,37 @@ public class AdminRestaurantController {
     }
 
     /**
+     * 修改手动营业状态（0 自动 / 1 强制营业 / 2 强制未营业）
+     */
+    @PostMapping("/manual-status/{id}")
+    public Result<?> setManualBusinessStatus(
+            @PathVariable Long id,
+            @RequestBody Restaurant requestBody,
+            HttpServletRequest request
+    ) {
+        String role = (String) request.getAttribute("role");
+        Long rid = (Long) request.getAttribute("restaurantId");
+
+        // 商家只能改自己的
+        if ("merchant".equals(role) && !rid.equals(id)) {
+            return Result.error("无权限操作其它餐厅");
+        }
+
+        // 后厨不能操作
+        if ("kitchen".equals(role)) {
+            return Result.error("后厨账号无权限操作");
+        }
+
+        Restaurant r = restaurantService.getById(id);
+        if (r == null) return Result.error("餐厅不存在");
+
+        r.setManualBusinessStatus(requestBody.getManualBusinessStatus());
+        restaurantService.updateById(r);
+
+        return Result.success("营业状态已更新");
+    }
+
+    /**
      * 删除餐厅
      * @param id 餐厅ID
      * @param request HTTP 请求，用于获取用户角色

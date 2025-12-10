@@ -74,4 +74,6 @@ public interface RestaurantService extends IService<Restaurant> {
      * @return 删除结果
      */
     Result<?> deleteRestaurant(Long id);
+
+    void loadBusinessStatus(Restaurant restaurant);
 }

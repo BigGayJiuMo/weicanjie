@@ -24,7 +24,7 @@ public interface RestaurantMapper extends BaseMapper<Restaurant> {
     @Select(
             "SELECT id, name, description, contact_phone, logo_url, address, status, " +
                     "       category_type, avg_rating, monthly_sales, packing_fee, " +
-                    "       business_status, created_time, updated_time " +
+                    "       business_status, manual_business_status, created_time, updated_time " +  // 添加 manual_business_status
                     "FROM restaurant " +
                     "WHERE status = 1 " +
                     "ORDER BY id"
@@ -41,7 +41,7 @@ public interface RestaurantMapper extends BaseMapper<Restaurant> {
     @Select(
             "SELECT id, name, description, contact_phone, logo_url, address, status, " +
                     "       category_type, avg_rating, monthly_sales, packing_fee, " +
-                    "       business_status, created_time, updated_time " +
+                    "       business_status, manual_business_status, created_time, updated_time " +  // 添加 manual_business_status
                     "FROM restaurant " +
                     "ORDER BY id"
     )
@@ -58,7 +58,7 @@ public interface RestaurantMapper extends BaseMapper<Restaurant> {
     @Select(
             "SELECT id, name, description, contact_phone, logo_url, address, status, " +
                     "       category_type, avg_rating, monthly_sales, packing_fee, " +
-                    "       business_status, created_time, updated_time " +
+                    "       business_status, manual_business_status, created_time, updated_time " +  // 添加 manual_business_status
                     "FROM restaurant " +
                     "WHERE category_type = #{categoryId} " +
                     "ORDER BY id"

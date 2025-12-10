@@ -18,6 +18,7 @@
         r.monthly_sales,
         r.packing_fee,
         r.business_status,
+        r.manual_business_status,  <!-- 添加这个字段 -->
         r.created_time,
         r.updated_time
         FROM restaurant r
@@ -38,7 +39,10 @@
     <select id="suggestRestaurant" resultType="com.jiumo.weicanjie.entity.Restaurant">
         SELECT DISTINCT
         r.id,
-        r.name
+        r.name,
+        r.status,
+        r.business_status,
+        r.manual_business_status  <!-- 添加这个字段 -->
         FROM restaurant r
         LEFT JOIN dish d ON r.id = d.restaurant_id
         <where>

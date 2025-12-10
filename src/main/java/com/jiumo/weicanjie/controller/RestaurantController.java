@@ -33,7 +33,12 @@ public class RestaurantController {
      */
     @GetMapping("/active")
     public Result<List<Restaurant>> getActiveRestaurants() {
-        return restaurantService.getActiveRestaurants();
+        Result<List<Restaurant>> result = restaurantService.getActiveRestaurants();
+
+        if (result.getCode() == 200) {
+            result.getData().forEach(restaurantService::loadBusinessStatus);
+        }
+        return result;
     }
 
     /**
@@ -45,7 +50,12 @@ public class RestaurantController {
      */
     @GetMapping("/all")
     public Result<List<Restaurant>> getAllRestaurants() {
-        return restaurantService.getAllRestaurants();
+        Result<List<Restaurant>> result = restaurantService.getAllRestaurants();
+
+        if (result.getCode() == 200) {
+            result.getData().forEach(restaurantService::loadBusinessStatus);
+        }
+        return result;
     }
 
     /**
@@ -73,11 +83,13 @@ public class RestaurantController {
     public Result<Restaurant> getRestaurantBasic(@PathVariable Long id) {
         Restaurant restaurant = restaurantService.getById(id);
         if (restaurant != null) {
+            restaurantService.loadBusinessStatus(restaurant);
             return Result.success(restaurant);
         } else {
             return Result.error("餐厅不存在");
         }
     }
+
 
     /**
      * 获取餐厅分类信息
@@ -89,7 +101,12 @@ public class RestaurantController {
      */
     @GetMapping("/listByCategory")
     public Result<List<Restaurant>> listByCategory(@RequestParam Integer categoryId) {
-        return restaurantService.getByCategory(categoryId);
+        Result<List<Restaurant>> result = restaurantService.getByCategory(categoryId);
+
+        if (result.getCode() == 200) {
+            result.getData().forEach(restaurantService::loadBusinessStatus);
+        }
+        return result;
     }
 
     /**
@@ -120,8 +137,14 @@ public class RestaurantController {
      */
     @GetMapping("/search")
     public Result<List<Restaurant>> searchRestaurant(@RequestParam String keyword) {
-        return restaurantService.searchRestaurant(keyword);
+        Result<List<Restaurant>> result = restaurantService.searchRestaurant(keyword);
+
+        if (result.getCode() == 200) {
+            result.getData().forEach(restaurantService::loadBusinessStatus);
+        }
+        return result;
     }
+
 
     /**
      * 实时联想搜索（只返回餐厅ID和名称）
@@ -133,6 +156,11 @@ public class RestaurantController {
      */
     @GetMapping("/suggest")
     public Result<List<Restaurant>> suggest(@RequestParam String keyword) {
-        return restaurantService.suggest(keyword);
+        Result<List<Restaurant>> result = restaurantService.suggest(keyword);
+
+        if (result.getCode() == 200) {
+            result.getData().forEach(restaurantService::loadBusinessStatus);
+        }
+        return result;
     }
 }
