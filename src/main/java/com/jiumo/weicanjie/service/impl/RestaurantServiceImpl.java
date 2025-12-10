@@ -42,8 +42,6 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     private RestaurantImageMapper restaurantImageMapper;
 
     @Autowired
-    private RestaurantBusinessHoursService restaurantBusinessHoursService;
-    @Autowired
     private RestaurantBusinessHoursMapper restaurantBusinessHoursMapper;
 
     @Autowired
@@ -88,12 +86,6 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
                 return Result.error("餐厅不存在");
             }
 
-            // 检查餐厅状态，如果 status=0 则不显示
-            if (restaurant.getStatus() != null && restaurant.getStatus() == 0) {
-                return Result.error("餐厅已下架");
-            }
-
-            // 加载营业时间并计算状态
             loadAndCalculateBusinessStatus(restaurant);
 
             // 获取餐厅的分类和菜品
@@ -109,11 +101,13 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
             restaurant.setShopImages(images);
 
             return Result.success(restaurant);
+
         } catch (Exception e) {
             log.error("获取餐厅详情异常", e);
             return Result.error("获取餐厅详情失败");
         }
     }
+
 
     private void loadAndCalculateBusinessStatus(Restaurant restaurant) {
         if (restaurant == null) return;
@@ -127,57 +121,72 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     }
 
     private void calculateBusinessStatus(Restaurant restaurant) {
+
+        // 如果餐厅 status=0 → 强制设为“已停业”
+        if (restaurant.getStatus() != null && restaurant.getStatus() == 0) {
+            restaurant.setBusinessStatus(0);
+            restaurant.setBusinessStatusText("已停业");
+            restaurant.setBusinessStatusClass("status-closed");
+            return; // 直接返回，不再进入营业时间判断
+        }
+
+        // 默认值
+        int businessStatus = 3;  // 1=营业中 2=休息中 3=已打烊
         String statusText = "营业状态未知";
-        String statusClass = "status-closed"; // 默认状态是关闭
+        String statusClass = "status-closed";
 
-        // 获取餐厅营业时间信息
+        // 2）正常营业时间判断
         List<RestaurantBusinessHours> businessHours = restaurant.getRestaurantBusinessHours();
-
         if (businessHours != null && !businessHours.isEmpty()) {
-            // 获取今天的星期几（1=星期一，7=星期日）
-            int today = LocalDate.now().getDayOfWeek().getValue();
 
-            // 找到今天的营业时间
+            int today = LocalDate.now().getDayOfWeek().getValue();
             RestaurantBusinessHours todayHours = businessHours.stream()
-                    .filter(hours -> hours.getDayOfWeek() == today)
+                    .filter(h -> h.getDayOfWeek() == today)
                     .findFirst()
                     .orElse(null);
 
             if (todayHours != null && todayHours.getIsOpen() == 1) {
-                LocalTime openTime = todayHours.getOpenTime();
-                LocalTime closeTime = todayHours.getCloseTime();
+                LocalTime open = todayHours.getOpenTime();
+                LocalTime close = todayHours.getCloseTime();
                 LocalTime now = LocalTime.now();
 
-                // 判断是否跨天营业（如23:00-02:00）
-                if (closeTime.isBefore(openTime)) {
-                    // 跨天营业：判断当前时间是否在营业时间内
-                    if (now.isAfter(openTime) || now.isBefore(closeTime)) {
+                boolean isCrossDay = close.isBefore(open);
+
+                if (isCrossDay) {
+                    if (now.isAfter(open) || now.isBefore(close)) {
+                        businessStatus = 1;
                         statusText = "营业中";
                         statusClass = "status-open";
                     } else {
+                        businessStatus = 3;
                         statusText = "已打烊";
                         statusClass = "status-closed";
                     }
                 } else {
-                    // 非跨天营业
-                    if (now.isBefore(openTime)) {
+                    if (now.isBefore(open)) {
+                        businessStatus = 2;
                         statusText = "未营业";
                         statusClass = "status-break";
-                    } else if (now.isAfter(closeTime)) {
+                    } else if (now.isAfter(close)) {
+                        businessStatus = 3;
                         statusText = "已打烊";
                         statusClass = "status-closed";
                     } else {
+                        businessStatus = 1;
                         statusText = "营业中";
                         statusClass = "status-open";
                     }
                 }
+
             } else {
+                businessStatus = 3;
                 statusText = "今日不营业";
                 statusClass = "status-closed";
             }
         }
 
-        // 将状态文本和状态类传递给前端
+        // 设置返回前端的字段
+        restaurant.setBusinessStatus(businessStatus);
         restaurant.setBusinessStatusText(statusText);
         restaurant.setBusinessStatusClass(statusClass);
     }
