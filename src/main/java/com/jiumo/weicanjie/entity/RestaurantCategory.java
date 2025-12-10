@@ -17,4 +17,6 @@ public class RestaurantCategory {
     private Integer id;  // 分类ID（手动设置）
 
     private String name;  // 分类名称
+
+    private Integer sortOrder; //分类顺序
 }

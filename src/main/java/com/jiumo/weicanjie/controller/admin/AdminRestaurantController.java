@@ -210,11 +210,11 @@ public class AdminRestaurantController {
     @PostMapping("/image/add")
     public Result<?> addImage(@RequestBody RestaurantImage img, HttpServletRequest request) {
         String role = (String) request.getAttribute("role");
-        Long rid = (Long) request.getAttribute("restaurantId");
+        Long restaurantId = (Long) request.getAttribute("restaurantId");
 
         // 商家只能上传自己餐厅的图片
-        if ("merchant".equals(role) && !rid.equals(img.getRestaurantId())) {
-            return Result.error("无权限上传图片到别家餐厅");
+        if ("merchant".equals(role) && !restaurantId.equals(img.getRestaurantId())) {
+            return Result.error("无权限上传图片到其他餐厅");
         }
 
         // 后厨无法上传餐厅图片
@@ -222,7 +222,22 @@ public class AdminRestaurantController {
             return Result.error("后厨账号无权限上传图片");
         }
 
-        boolean ok = restaurantImageService.addImage(img);
+        // 检查图片数量限制（最多3张）
+        long count = restaurantImageService.count(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<RestaurantImage>()
+                        .eq("restaurant_id", img.getRestaurantId())
+        );
+
+        if (count >= 3) {
+            return Result.error("每个餐厅最多只能上传3张图片");
+        }
+
+        // 如果未设置排序，则设置为当前数量+1
+        if (img.getSortOrder() == null) {
+            img.setSortOrder((int)count + 1);
+        }
+
+        boolean ok = restaurantImageService.save(img);
         return ok ? Result.success("上传成功") : Result.error("上传失败");
     }
 
@@ -237,16 +252,15 @@ public class AdminRestaurantController {
      */
     @DeleteMapping("/image/delete/{id}")
     public Result<?> deleteImage(@PathVariable Long id, HttpServletRequest request) {
-
         String role = (String) request.getAttribute("role");
-        Long rid = (Long) request.getAttribute("restaurantId");
+        Long restaurantId = (Long) request.getAttribute("restaurantId");
 
         RestaurantImage img = restaurantImageService.getById(id);
         if (img == null) return Result.error("图片不存在");
 
         // 商家只能删除自己餐厅的图片
-        if ("merchant".equals(role) && !rid.equals(img.getRestaurantId())) {
-            return Result.error("无权限删除别家图片");
+        if ("merchant".equals(role) && !restaurantId.equals(img.getRestaurantId())) {
+            return Result.error("无权限删除其他餐厅的图片");
         }
 
         // 后厨无法删除餐厅图片
