@@ -85,20 +85,32 @@ public class UserReviewServiceImpl implements UserReviewService {
      */
     @Override
     public void updateRestaurantRating(Long restaurantId) {
-        // 获取餐厅的所有评价
-        List<Map<String, Object>> reviews = userReviewMapper.selectReviewsByRestaurantId(restaurantId);
+        // 只统计：review_status = 1（审核通过） 且 status = 0（正常）的评价
+        List<Map<String, Object>> reviews = userReviewMapper.selectValidReviewsForRating(restaurantId);
 
-        // 计算该餐厅的平均评分
+        // 没评价 → 设置为 0 (或 NULL，看你系统需求)
+        if (reviews == null || reviews.isEmpty()) {
+            Restaurant r = new Restaurant();
+            r.setId(restaurantId);
+            r.setAvgRating(0.0);   // ⭐如果你想显示 “暂无评分”，可以改成 null
+            restaurantMapper.updateById(r);
+            return;
+        }
+
+        // 计算平均评分（包含 null 安全处理）
         double avg = reviews.stream()
-                .mapToInt(v -> (Integer) v.get("rating"))
+                .mapToDouble(v -> {
+                    Object val = v.get("rating"); // 你的字段就是 rating（正确）
+                    if (val == null) return 0;     // 空值安全处理
+                    return Double.parseDouble(val.toString());
+                })
                 .average()
                 .orElse(0);
 
-        // 更新餐厅评分
+        // 写回数据库
         Restaurant r = new Restaurant();
         r.setId(restaurantId);
-        r.setAvgRating(avg == 0 ? null : avg);
-
+        r.setAvgRating(avg);
         restaurantMapper.updateById(r);
     }
 

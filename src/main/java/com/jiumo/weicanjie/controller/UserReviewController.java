@@ -71,9 +71,13 @@ public class UserReviewController {
      */
     @PostMapping("/delete/{id}")
     public Result<?> deleteReview(@PathVariable Long id) {
-        // 查找指定ID的评价
+
+        // 查找评价
         UserReview review = userReviewMapper.selectById(id);
         if (review == null) return Result.error("评价不存在");
+
+        // 先删除与该评价相关的所有举报记录（review_report）
+        userReviewMapper.deleteReportsByReviewId(id);
 
         // 删除评价
         userReviewMapper.deleteById(id);

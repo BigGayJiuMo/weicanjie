@@ -98,4 +98,13 @@ public interface UserReviewMapper extends BaseMapper<UserReview> {
             "SET reply_content = NULL, reply_time = NULL " +
             "WHERE id = #{reviewId}")
     int deleteReply(@Param("reviewId") Long reviewId);
+
+    @Select("SELECT rating FROM user_review " +
+            "WHERE restaurant_id = #{restaurantId} " +
+            "AND status = 0 " +           //  0 = 正常，不是 1！
+            "AND review_status = 1")      //  只算审核通过的
+    List<Map<String, Object>> selectValidReviewsForRating(Long restaurantId);
+
+    @Delete("DELETE FROM review_report WHERE review_id = #{reviewId}")
+    int deleteReportsByReviewId(Long reviewId);
 }

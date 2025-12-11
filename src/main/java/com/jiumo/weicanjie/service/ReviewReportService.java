@@ -36,4 +36,6 @@ public interface ReviewReportService extends IService<ReviewReport> {
      * @return 返回符合条件的举报列表，每个举报包括举报原因、相关评价信息等
      */
     List<Map<String, Object>> adminList(Integer status, Long restaurantId);
+
+    void deleteByReviewId(Long reviewId);
 }

@@ -2,10 +2,12 @@ package com.jiumo.weicanjie.controller.admin;
 
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.ReviewReport;
+import com.jiumo.weicanjie.entity.User;
 import com.jiumo.weicanjie.entity.UserReview;
 import com.jiumo.weicanjie.mapper.UserReviewMapper;
 import com.jiumo.weicanjie.service.ReviewReportService;
 import com.jiumo.weicanjie.service.UserReviewService;
+import com.jiumo.weicanjie.service.UserStatsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +31,9 @@ public class AdminReviewController {
 
     @Autowired
     private ReviewReportService reviewReportService;
+
+    @Autowired
+    private UserStatsService userStatsService;
 
     /**
      * 获取用户评价审核列表
@@ -151,5 +156,36 @@ public class AdminReviewController {
         }
 
         return Result.success("举报审核完成");
+    }
+
+    /**
+     * 超级管理员删除评价
+     */
+    @PostMapping("/delete/{id}")
+    @Transactional
+    public Result<?> adminDeleteReview(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+
+        String role = (String) request.getAttribute("role");
+        if (!"super".equals(role)) return Result.error("无权限");
+
+        // 查评价是否存在
+        UserReview review = userReviewMapper.selectById(id);
+        if (review == null) return Result.error("评价不存在");
+
+        // ① 删除举报记录（review_report）
+        reviewReportService.deleteByReviewId(id);
+
+        // ② 删除评价
+        userReviewMapper.deleteById(id);
+
+        // ③ 更新餐厅评分
+        userReviewService.updateRestaurantRating(review.getRestaurantId());
+
+        // ④ 更新用户统计
+        userStatsService.decrementReviewCount(review.getUserId());
+
+        return Result.success("删除成功");
     }
 }

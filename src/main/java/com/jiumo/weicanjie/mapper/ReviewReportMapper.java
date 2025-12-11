@@ -3,6 +3,7 @@ package com.jiumo.weicanjie.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jiumo.weicanjie.entity.ReviewReport;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -52,4 +53,7 @@ public interface ReviewReportMapper extends BaseMapper<ReviewReport> {
             @Param("status") Integer status,
             @Param("restaurantId") Long restaurantId
     );
+
+    @Delete("DELETE FROM review_report WHERE review_id = #{reviewId}")
+    int deleteByReviewId(Long reviewId);
 }

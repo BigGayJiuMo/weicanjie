@@ -72,4 +72,9 @@ public class ReviewReportServiceImpl extends ServiceImpl<ReviewReportMapper, Rev
         // 获取符合条件的举报列表
         return reviewReportMapper.adminList(status, restaurantId);
     }
+
+    @Override
+    public void deleteByReviewId(Long reviewId) {
+        reviewReportMapper.deleteByReviewId(reviewId);
+    }
 }
