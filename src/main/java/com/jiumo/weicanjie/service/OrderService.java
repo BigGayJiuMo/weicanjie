@@ -213,4 +213,6 @@ public interface OrderService extends IService<Order> {
      * @return 返回拒绝退款的结果
      */
     Result<String> rejectRefund(Long orderId);
+
+    Result<String> confirmPickup(Long orderId);
 }

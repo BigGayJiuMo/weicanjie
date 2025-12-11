@@ -24,7 +24,7 @@ public class Order {
     private BigDecimal totalAmount;  // 总金额
     private BigDecimal packingFee;  // 打包费
     private String remark;  // 订单备注
-    private Integer status;  // 订单状态：1=待支付，2=待处理，3=制作中，4=已完成，5=已取消
+    private Integer status;  // 订单状态：1=待支付，2=待处理，3=制作中，4=待取餐，5=已取消，6=已完成，7=退款中，8=已退款
     private Integer payStatus;  // 支付状态：0=未支付，1=已支付，2=支付失败，3=已退款
     private String transactionId;  // 交易ID
     private Integer eatType;  // 就餐类型：1=堂食，2=外带

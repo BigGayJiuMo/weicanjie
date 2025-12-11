@@ -397,10 +397,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             case 1: return "待支付";
             case 2: return "待处理";
             case 3: return "制作中";
-            case 4: return "已完成";
+            case 4: return "待取餐";
             case 5: return "已取消";
-            case 6: return "退款中";
-            case 7: return "已退款";
+            case 6: return "已完成";
+            case 7: return "退款中";
+            case 8: return "已退款";
             default: return "未知状态";
         }
     }
@@ -483,16 +484,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      */
     @Override
     public Result<?> getKitchenOrderList(Long restaurantId) {
-
         LambdaQueryWrapper<Order> qw = new LambdaQueryWrapper<>();
 
-        // 只有不为null时才按餐厅过滤
         if (restaurantId != null) {
             qw.eq(Order::getRestaurantId, restaurantId);
         }
 
-        // 只看待处理和制作中的订单
-        qw.in(Order::getStatus, Arrays.asList(2, 3));
+        // 后厨需要看到待处理、制作中、待取餐的订单
+        qw.in(Order::getStatus, Arrays.asList(2, 3, 4));
         qw.orderByAsc(Order::getStatus)
                 .orderByDesc(Order::getCreatedTime);
 
@@ -521,7 +520,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             return Result.error("订单不存在");
         }
 
-        if (!(order.getStatus() == 3 || order.getStatus() == 4)) {
+        if (!(order.getStatus() == 4  || order.getStatus() == 6)) {
             return Result.error("当前状态无法申请退款");
         }
 
@@ -535,7 +534,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         );
 
         // 更新订单状态为退款中
-        orderMapper.updateOrderStatusOnly(orderId, 6);
+        orderMapper.updateOrderStatusOnly(orderId, 7);
 
         return Result.success("退款申请已提交");
     }
@@ -551,8 +550,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 调用退款服务，更新退款记录为已同意
         refundService.approveRefund(orderId);
 
-        // 退款成功后，将订单状态更新为已退款（状态码 7）
-        orderMapper.updateOrderStatusOnly(orderId, 7);
+        // 退款成功后，将订单状态更新为已退款（状态码 8）
+        orderMapper.updateOrderStatusOnly(orderId, 8);
 
         // 返回操作成功的信息
         return Result.success("退款已同意");
@@ -572,5 +571,39 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         // 返回操作成功的信息
         return Result.success("退款已拒绝");
+    }
+
+    /**
+     * 用户确认取餐
+     * @param orderId 订单ID
+     * @return 确认取餐结果
+     */
+    @Override
+    @Transactional
+    public Result<String> confirmPickup(Long orderId) {
+        try {
+            Order order = orderMapper.selectById(orderId);
+            if (order == null) {
+                return Result.error("订单不存在");
+            }
+
+            // 只有待取餐状态（4）才能确认取餐
+            if (order.getStatus() != 4) {
+                return Result.error("当前状态无法确认取餐");
+            }
+
+            // 更新订单状态为已完成（6）
+            int result = orderMapper.updateOrderStatusOnly(orderId, 6);
+
+            if (result > 0) {
+                // 可选：记录操作日志或其他业务逻辑
+                return Result.success("确认取餐成功");
+            } else {
+                return Result.error("确认取餐失败");
+            }
+
+        } catch (Exception e) {
+            return Result.error("确认取餐失败: " + e.getMessage());
+        }
     }
 }

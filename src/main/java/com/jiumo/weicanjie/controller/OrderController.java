@@ -203,6 +203,11 @@ public class OrderController {
         return Result.ok();
     }
 
+    @PostMapping("/confirmPickup/{orderId}")
+    public Result<String> confirmPickup(@PathVariable Long orderId) {
+        return orderService.confirmPickup(orderId);
+    }
+
     @Data
     public static class RefundApplyRequest {
         private Long orderId;  // 订单ID

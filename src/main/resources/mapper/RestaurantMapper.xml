@@ -40,9 +40,19 @@
         SELECT DISTINCT
         r.id,
         r.name,
+        r.description,
+        r.contact_phone,
+        r.logo_url,
+        r.address,
         r.status,
+        r.category_type,
+        r.avg_rating,
+        r.monthly_sales,
+        r.packing_fee,
         r.business_status,
-        r.manual_business_status  <!-- 添加这个字段 -->
+        r.manual_business_status,
+        r.created_time,
+        r.updated_time
         FROM restaurant r
         LEFT JOIN dish d ON r.id = d.restaurant_id
         <where>
