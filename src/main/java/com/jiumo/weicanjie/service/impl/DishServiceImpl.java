@@ -53,7 +53,7 @@ public class DishServiceImpl implements DishService {
         // 创建查询条件构造器
         LambdaQueryWrapper<Dish> qw = new LambdaQueryWrapper<>();
         qw.eq(Dish::getRestaurantId, restaurantId);  // 按照餐厅ID进行过滤
-
+        qw.ne(Dish::getStatus, -1);
         // 如果提供了分类ID，进行分类过滤
         if (categoryId != null) {
             qw.eq(Dish::getCategoryId, categoryId);
@@ -112,6 +112,12 @@ public class DishServiceImpl implements DishService {
      */
     @Override
     public void deleteDish(Long id) {
-        dishMapper.deleteById(id);  // 根据菜品ID删除菜品
+        Dish dish = dishMapper.selectById(id);
+        if (dish == null) {
+            throw new RuntimeException("菜品不存在");
+        }
+
+        dish.setStatus(-1);
+        dishMapper.updateById(dish);
     }
 }

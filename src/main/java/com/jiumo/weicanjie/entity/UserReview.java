@@ -43,7 +43,7 @@ public class UserReview {
     @TableField("reply_time")
     private Date replyTime;  // 回复时间
 
-    private Integer status;  // 状态：0正常 1屏蔽
+    private Integer status;  // 状态：1正常 0屏蔽
 
     @TableField("review_status")
     private Integer reviewStatus;  // 审核状态：0未审核 1通过 2驳回

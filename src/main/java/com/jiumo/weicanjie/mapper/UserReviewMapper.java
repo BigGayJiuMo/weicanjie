@@ -101,7 +101,7 @@ public interface UserReviewMapper extends BaseMapper<UserReview> {
 
     @Select("SELECT rating FROM user_review " +
             "WHERE restaurant_id = #{restaurantId} " +
-            "AND status = 0 " +           //  0 = 正常，不是 1！
+            "AND status = 1 " +
             "AND review_status = 1")      //  只算审核通过的
     List<Map<String, Object>> selectValidReviewsForRating(Long restaurantId);
 
