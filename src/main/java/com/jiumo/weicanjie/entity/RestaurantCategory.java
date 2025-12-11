@@ -13,8 +13,8 @@ import lombok.Data;
 @TableName("restaurant_category")
 public class RestaurantCategory {
 
-    @TableId(type = IdType.INPUT)
-    private Integer id;  // 分类ID（手动设置）
+    @TableId(type = IdType.AUTO)
+    private Integer id; // 分类ID（手动设置）
 
     private String name;  // 分类名称
 
