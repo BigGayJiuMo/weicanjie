@@ -152,6 +152,9 @@ public class AdminReviewController {
             if (review != null) {
                 review.setStatus(0); // 隐藏评价
                 userReviewMapper.updateById(review);
+
+                // 新餐厅评分
+                userReviewService.updateRestaurantRating(review.getRestaurantId());
             }
         }
 

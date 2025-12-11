@@ -73,6 +73,7 @@ public class UserReviewServiceImpl implements UserReviewService {
             // 添加其他的评价状态信息
             item.put("reviewStatus", item.get("review_status"));
             item.put("rejectReason", item.get("reject_reason"));
+            item.put("displayStatus", item.get("status"));
         }
 
         return list;
