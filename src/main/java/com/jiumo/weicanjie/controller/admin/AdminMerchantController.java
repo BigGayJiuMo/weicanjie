@@ -21,8 +21,12 @@ public class AdminMerchantController {
      * @return 操作结果，包含创建状态
      * @note 支持创建商家（merchant）或厨房（kitchen）类型账号
      */
-    @PostMapping("/add")   // 前端调用的路径
-    public Result<?> add(@RequestBody AdminUser user) {
+    @PostMapping("/add")
+    public Result<?> add(@RequestBody AdminUser user, HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"super".equals(role)) {
+            return Result.error("无权限创建账号");
+        }
         return adminUserService.createAccount(user);
     }
 
@@ -32,8 +36,8 @@ public class AdminMerchantController {
      * @note 该接口返回所有类型为 merchant 和 kitchen 的账号
      */
     @GetMapping("/list")
-    public Result<?> list() {
-        return adminUserService.listAccounts();
+    public Result<?> list(@RequestParam(required = false) String keyword) {
+        return adminUserService.listAccounts(keyword);
     }
 
     /**
@@ -43,7 +47,11 @@ public class AdminMerchantController {
      * @note 删除操作会彻底移除指定的商家或厨房账号
      */
     @DeleteMapping("/delete/{id}")
-    public Result<?> delete(@PathVariable Long id) {
+    public Result<?> delete(@PathVariable Long id, HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"super".equals(role)) {
+            return Result.error("无权限执行此操作");
+        }
         return adminUserService.deleteMerchant(id);
     }
 
@@ -54,7 +62,46 @@ public class AdminMerchantController {
      * @note 该操作会重置账号的密码为默认值
      */
     @PostMapping("/resetPassword/{id}")
-    public Result<?> reset(@PathVariable Long id) {
+    public Result<?> reset(@PathVariable Long id, HttpServletRequest request) {
+        String role = (String) request.getAttribute("role");
+        if (!"super".equals(role)) {
+            return Result.error("无权限执行此操作");
+        }
         return adminUserService.resetPassword(id);
+    }
+
+    /**
+     * 发送验证码（模拟）
+     */
+    @PostMapping("/sendCode")
+    public Result<?> sendCode(@RequestParam String phone) {
+        return adminUserService.sendCode(phone);
+    }
+
+    /**
+     * 验证码修改密码（商家自己用）
+     */
+    @PostMapping("/changePasswordByCode")
+    public Result<?> changePasswordByCode(
+            @RequestParam String phone,
+            @RequestParam String code,
+            @RequestParam String newPwd,
+            HttpServletRequest request
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        return adminUserService.updatePasswordWithCode(userId, code, newPwd, phone);
+    }
+
+    /**
+     * 验证码绑定/修改手机号
+     */
+    @PostMapping("/bindPhoneByCode")
+    public Result<?> bindPhoneByCode(
+            @RequestParam String phone,
+            @RequestParam String code,
+            HttpServletRequest request
+    ) {
+        Long userId = (Long) request.getAttribute("userId");
+        return adminUserService.bindPhoneWithCode(userId, phone, code);
     }
 }

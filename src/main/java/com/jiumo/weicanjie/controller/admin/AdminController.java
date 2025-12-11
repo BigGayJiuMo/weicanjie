@@ -37,17 +37,4 @@ public class AdminController {
         return adminUserService.login(dto.getUsername(), dto.getPassword());
     }
 
-    /**
-     * 创建商家账户接口
-     * @param user 新建商家用户的详细信息（用户名、密码等）
-     * @return 操作结果，包括是否创建成功
-     * @throws InvalidInputException 当输入的数据不合法时抛出异常
-     * @throws UserAlreadyExistsException 当用户名已存在时抛出异常
-     */
-    @PostMapping("/createMerchant")
-    public Result<?> createMerchant(@RequestBody AdminUser user) {
-        // 调用服务层方法创建商家账户
-        return adminUserService.createAccount(user);
-    }
-
 }
