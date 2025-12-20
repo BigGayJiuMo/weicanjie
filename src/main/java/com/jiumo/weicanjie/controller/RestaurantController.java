@@ -163,4 +163,16 @@ public class RestaurantController {
         }
         return result;
     }
+
+    /**
+     * 获取餐厅状态
+     *
+     * @param id 餐厅ID
+     * @return 返回餐厅状态
+     */
+    @GetMapping("/status/{id}")
+    public Result<Integer> getRestaurantStatus(@PathVariable Long id) {
+        return restaurantService.getRestaurantStatus(id);
+    }
+
 }

@@ -75,5 +75,8 @@ public interface RestaurantService extends IService<Restaurant> {
      */
     Result<?> deleteRestaurant(Long id);
 
+    Result<Integer> getRestaurantStatus(Long restaurantId);
+
     void loadBusinessStatus(Restaurant restaurant);
+
 }

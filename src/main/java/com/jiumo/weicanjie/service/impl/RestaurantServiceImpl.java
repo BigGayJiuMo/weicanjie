@@ -192,6 +192,25 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         restaurant.setBusinessStatusClass(statusClass);
     }
 
+    /**
+     * 获取餐厅状态信息
+     */
+    @Override
+    public Result<Integer> getRestaurantStatus(Long restaurantId) {
+        try {
+            Restaurant restaurant = restaurantMapper.selectById(restaurantId);
+            if (restaurant == null) {
+                return Result.error("餐厅不存在");
+            }
+
+            // 计算并返回业务状态
+            loadAndCalculateBusinessStatus(restaurant);
+            return Result.success(restaurant.getBusinessStatus());
+        } catch (Exception e) {
+            log.error("获取餐厅状态失败", e);
+            return Result.error("获取餐厅状态失败");
+        }
+    }
 
     /**
      * 获取所有餐厅的列表
