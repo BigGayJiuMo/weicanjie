@@ -144,8 +144,8 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
 
         /* 3）自动模式：按营业时间判断 */
         int businessStatus = 3;
-        String statusText = "已打烊";
-        String statusClass = "status-closed";
+        String statusText = "休息中";
+        String statusClass = "status-break";
 
         List<RestaurantBusinessHours> hours = restaurant.getRestaurantBusinessHours();
         if (hours != null && !hours.isEmpty()) {
@@ -176,8 +176,8 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
                         statusClass = "status-break";
                     } else if (now.isAfter(close)) {
                         businessStatus = 3;
-                        statusText = "已打烊";
-                        statusClass = "status-closed";
+                        statusText = "休息中";
+                        statusClass = "status-break";
                     } else {
                         businessStatus = 1;
                         statusText = "营业中";
