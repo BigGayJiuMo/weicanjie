@@ -6,10 +6,12 @@ import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.Cart;
 import com.jiumo.weicanjie.mapper.CartMapper;
 import com.jiumo.weicanjie.service.CartService;
+import com.jiumo.weicanjie.service.RestaurantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +27,10 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     @Autowired
     private CartMapper cartMapper;
 
+    @Autowired
+    private RestaurantService restaurantService;
     /**
-     * 获取用户指定餐厅的购物车列表
+     * 获取用户指定餐厅的购物车列表，过滤已停业的餐厅
      *
      * @param userId 用户ID
      * @return 用户的购物车列表
@@ -34,7 +38,16 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     @Override
     public Result<List<Cart>> getUserCartList(Long userId) {
         try {
-            List<Cart> cartList = cartMapper.selectByUserId(userId); // 根据用户ID查询购物车
+            // 获取购物车列表（SQL中已过滤已停业餐厅）
+            List<Cart> cartList = cartMapper.selectByUserId(userId);
+
+            if (cartList == null || cartList.isEmpty()) {
+                return Result.success(Collections.emptyList());  // 使用 Collections.emptyList()
+            }
+
+            // 二次验证：确保没有停业餐厅的商品
+            cartList = filterClosedRestaurants(cartList);
+
             return Result.success(cartList);
         } catch (Exception e) {
             return Result.error("获取购物车列表失败: " + e.getMessage());
@@ -42,7 +55,7 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     }
 
     /**
-     * 获取用户在指定餐厅的购物车映射
+     * 获取用户在指定餐厅的购物车映射，过滤已停业的餐厅
      *
      * @param userId 用户ID
      * @param restaurantId 餐厅ID
@@ -51,13 +64,51 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     @Override
     public Result<Map<Long, Integer>> getUserCartMap(Long userId, Long restaurantId) {
         try {
-            List<Cart> cartList = cartMapper.selectByUserAndRestaurant(userId, restaurantId); // 根据用户和餐厅查询购物车
+            // 检查餐厅状态
+            Result<Integer> statusResult = restaurantService.getRestaurantStatus(restaurantId);
+            if (statusResult.getCode() == 200 && statusResult.getData() == 0) {
+                // 餐厅已停业，返回空映射
+                return Result.success(Collections.emptyMap());
+            }
+
+            List<Cart> cartList = cartMapper.selectByUserAndRestaurant(userId, restaurantId);
             Map<Long, Integer> cartMap = cartList.stream()
-                    .collect(Collectors.toMap(Cart::getDishId, Cart::getQuantity)); // 将购物车转为菜品ID和数量的映射
+                    .collect(Collectors.toMap(Cart::getDishId, Cart::getQuantity));
             return Result.success(cartMap);
         } catch (Exception e) {
             return Result.error("获取购物车映射失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 过滤已停业餐厅的购物车项
+     */
+    private List<Cart> filterClosedRestaurants(List<Cart> cartList) {
+        if (cartList == null || cartList.isEmpty()) {
+            return cartList;
+        }
+
+        // 按餐厅分组
+        Map<Long, List<Cart>> cartsByRestaurant = cartList.stream()
+                .collect(Collectors.groupingBy(Cart::getRestaurantId));
+
+        List<Cart> filteredCarts = cartsByRestaurant.entrySet().stream()
+                .filter(entry -> {
+                    Long restaurantId = entry.getKey();
+                    try {
+                        // 检查餐厅状态
+                        Result<Integer> statusResult = restaurantService.getRestaurantStatus(restaurantId);
+                        // 只保留状态不为0（非停业）的餐厅
+                        return statusResult.getCode() == 200 && statusResult.getData() != 0;
+                    } catch (Exception e) {
+                        // 如果查询失败，保守起见返回false
+                        return false;
+                    }
+                })
+                .flatMap(entry -> entry.getValue().stream())
+                .collect(Collectors.toList());
+
+        return filteredCarts;
     }
 
     /**
