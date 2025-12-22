@@ -1,6 +1,7 @@
 package com.jiumo.weicanjie.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.jiumo.weicanjie.dto.ReportData;
 import com.jiumo.weicanjie.entity.Order;
 import org.apache.ibatis.annotations.*;
 
@@ -93,8 +94,10 @@ public interface OrderMapper extends BaseMapper<Order> {
      * @param endDate   结束日期
      * @return 返回订单数据报告
      */
-    List<?> getReportData(
+    List<ReportData> getReportData(
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("endDate") LocalDate endDate,
+            @Param("restaurantId") Long restaurantId,
+            @Param("granularity") String granularity
     );
 }

@@ -22,5 +22,6 @@ public interface ReportService {
      * @param endDate 结束日期，定义报表统计的结束日期
      * @return 返回包含统计数据的列表，具体内容取决于实现
      */
-    List<?> generateReport(LocalDate startDate, LocalDate endDate);
+    List<?> generateReport(LocalDate startDate, LocalDate endDate, Long restaurantId, String granularity);
+
 }

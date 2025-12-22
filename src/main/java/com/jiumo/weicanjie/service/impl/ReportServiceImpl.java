@@ -33,7 +33,8 @@ public class ReportServiceImpl implements ReportService {
      * @return 返回包含统计数据的列表，具体内容基于订单数据
      */
     @Override
-    public List<?> generateReport(LocalDate startDate, LocalDate endDate) {
-        return orderMapper.getReportData(startDate, endDate);
+    public List<?> generateReport(LocalDate startDate, LocalDate endDate, Long restaurantId, String granularity) {
+        return orderMapper.getReportData(startDate, endDate, restaurantId, granularity);
     }
+
 }
