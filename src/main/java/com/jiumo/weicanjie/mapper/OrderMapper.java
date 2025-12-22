@@ -1,6 +1,7 @@
 package com.jiumo.weicanjie.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.jiumo.weicanjie.dto.KpiData;
 import com.jiumo.weicanjie.dto.ReportData;
 import com.jiumo.weicanjie.entity.Order;
 import org.apache.ibatis.annotations.*;
@@ -99,5 +100,14 @@ public interface OrderMapper extends BaseMapper<Order> {
             @Param("endDate") LocalDate endDate,
             @Param("restaurantId") Long restaurantId,
             @Param("granularity") String granularity
+    );
+
+    /**
+     * KPI 统计（用于环比）
+     */
+    KpiData getKpi(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("restaurantId") Long restaurantId
     );
 }

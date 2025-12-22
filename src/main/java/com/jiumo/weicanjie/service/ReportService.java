@@ -1,5 +1,7 @@
 package com.jiumo.weicanjie.service;
 
+import com.jiumo.weicanjie.dto.KpiCompareDTO;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -24,4 +26,10 @@ public interface ReportService {
      */
     List<?> generateReport(LocalDate startDate, LocalDate endDate, Long restaurantId, String granularity);
 
+    KpiCompareDTO getKpiCompare(
+            LocalDate startDate,
+            LocalDate endDate,
+            Long restaurantId,
+            String granularity
+    );
 }

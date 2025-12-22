@@ -1,11 +1,15 @@
 package com.jiumo.weicanjie.service.impl;
 
+import com.jiumo.weicanjie.dto.KpiCompareDTO;
+import com.jiumo.weicanjie.dto.KpiData;
 import com.jiumo.weicanjie.mapper.OrderMapper;
 import com.jiumo.weicanjie.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import java.time.DayOfWeek;
+import java.time.temporal.TemporalAdjusters;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -35,6 +39,103 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public List<?> generateReport(LocalDate startDate, LocalDate endDate, Long restaurantId, String granularity) {
         return orderMapper.getReportData(startDate, endDate, restaurantId, granularity);
+    }
+
+    @Override
+    public KpiCompareDTO getKpiCompare(
+            LocalDate startDate,
+            LocalDate endDate,
+            Long restaurantId,
+            String granularity
+    ) {
+
+        // ① 先算“当前自然周期”
+        LocalDate[] currentPeriod;
+
+        switch (granularity) {
+            case "week":
+                currentPeriod = getNaturalWeek(startDate);
+                break;
+
+            case "month":
+                currentPeriod = getNaturalMonth(startDate);
+                break;
+
+            case "day":
+            default:
+                currentPeriod = new LocalDate[]{startDate, endDate};
+                break;
+        }
+
+        // ② 当前周期 KPI
+        KpiData current = orderMapper.getKpi(
+                currentPeriod[0],
+                currentPeriod[1],
+                restaurantId
+        );
+
+        // ③ 上一自然周期
+        LocalDate[] prevPeriod = getPrevPeriod(
+                currentPeriod[0],
+                currentPeriod[1],
+                granularity
+        );
+
+        // ④ 上期 KPI
+        KpiData previous = orderMapper.getKpi(
+                prevPeriod[0],
+                prevPeriod[1],
+                restaurantId
+        );
+
+        // ⑤ 返回
+        KpiCompareDTO dto = new KpiCompareDTO();
+        dto.setCurrent(current);
+        dto.setPrevious(previous);
+        return dto;
+    }
+
+    private LocalDate[] getNaturalWeek(LocalDate anyDay) {
+        LocalDate start = anyDay.with(DayOfWeek.MONDAY);
+        LocalDate end = anyDay.with(DayOfWeek.SUNDAY);
+        return new LocalDate[]{start, end};
+    }
+
+    private LocalDate[] getPrevNaturalWeek(LocalDate anyDay) {
+        LocalDate prevWeekDay = anyDay.minusWeeks(1);
+        return getNaturalWeek(prevWeekDay);
+    }
+
+    private LocalDate[] getNaturalMonth(LocalDate anyDay) {
+        LocalDate start = anyDay.with(TemporalAdjusters.firstDayOfMonth());
+        LocalDate end = anyDay.with(TemporalAdjusters.lastDayOfMonth());
+        return new LocalDate[]{start, end};
+    }
+
+    private LocalDate[] getPrevNaturalMonth(LocalDate anyDay) {
+        LocalDate prevMonthDay = anyDay.minusMonths(1);
+        return getNaturalMonth(prevMonthDay);
+    }
+
+    private LocalDate[] getPrevPeriod(
+            LocalDate startDate,
+            LocalDate endDate,
+            String granularity
+    ) {
+        switch (granularity) {
+            case "week":
+                return getPrevNaturalWeek(startDate);
+
+            case "month":
+                return getPrevNaturalMonth(startDate);
+
+            case "day":
+            default:
+                return new LocalDate[]{
+                        startDate.minusDays(1),
+                        startDate.minusDays(1)
+                };
+        }
     }
 
 }

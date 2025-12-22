@@ -1,6 +1,8 @@
 package com.jiumo.weicanjie.controller.admin;
 
 import com.jiumo.weicanjie.common.Result;
+import com.jiumo.weicanjie.dto.KpiCompareDTO;
+import com.jiumo.weicanjie.dto.ReportResponseDTO;
 import com.jiumo.weicanjie.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -45,6 +47,7 @@ public class AdminReportController {
             return Result.error("无权限");
         }
 
+        // ① 图表 & 表格
         List<?> reportData = reportService.generateReport(
                 startDate,
                 endDate,
@@ -52,6 +55,19 @@ public class AdminReportController {
                 granularity
         );
 
-        return Result.ok(reportData);
+        // ② KPI 环比
+        KpiCompareDTO kpiCompare = reportService.getKpiCompare(
+                startDate,
+                endDate,
+                restaurantId,
+                granularity
+        );
+
+        // ③ 统一返回
+        ReportResponseDTO resp = new ReportResponseDTO();
+        resp.setData(reportData);
+        resp.setKpi(kpiCompare);
+
+        return Result.ok(resp);
     }
 }
