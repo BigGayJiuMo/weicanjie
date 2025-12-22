@@ -43,11 +43,16 @@ public class AdminReportController {
     ) {
 
         String role = (String) request.getAttribute("role");
-        if (!"super".equals(role)) {
+        Long loginRestaurantId = (Long) request.getAttribute("restaurantId");
+
+        if ("kitchen".equals(role)) {
             return Result.error("无权限");
         }
 
-        // ① 图表 & 表格
+        if ("merchant".equals(role)) {
+            restaurantId = loginRestaurantId;
+        }
+
         List<?> reportData = reportService.generateReport(
                 startDate,
                 endDate,
@@ -55,7 +60,6 @@ public class AdminReportController {
                 granularity
         );
 
-        // ② KPI 环比
         KpiCompareDTO kpiCompare = reportService.getKpiCompare(
                 startDate,
                 endDate,
@@ -63,7 +67,6 @@ public class AdminReportController {
                 granularity
         );
 
-        // ③ 统一返回
         ReportResponseDTO resp = new ReportResponseDTO();
         resp.setData(reportData);
         resp.setKpi(kpiCompare);

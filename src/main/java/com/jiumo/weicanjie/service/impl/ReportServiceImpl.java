@@ -48,47 +48,33 @@ public class ReportServiceImpl implements ReportService {
             Long restaurantId,
             String granularity
     ) {
-
-        // ① 先算“当前自然周期”
-        LocalDate[] currentPeriod;
-
-        switch (granularity) {
-            case "week":
-                currentPeriod = getNaturalWeek(startDate);
-                break;
-
-            case "month":
-                currentPeriod = getNaturalMonth(startDate);
-                break;
-
-            case "day":
-            default:
-                currentPeriod = new LocalDate[]{startDate, endDate};
-                break;
+        // 只对「月」做同比
+        if (!"month".equals(granularity)) {
+            KpiCompareDTO dto = new KpiCompareDTO();
+            dto.setCurrent(orderMapper.getKpi(startDate, endDate, restaurantId));
+            dto.setPrevious(null);
+            return dto;
         }
 
-        // ② 当前周期 KPI
+        // 当前自然月
+        LocalDate[] currentPeriod = getNaturalMonth(startDate);
+
         KpiData current = orderMapper.getKpi(
                 currentPeriod[0],
                 currentPeriod[1],
                 restaurantId
         );
 
-        // ③ 上一自然周期
-        LocalDate[] prevPeriod = getPrevPeriod(
-                currentPeriod[0],
-                currentPeriod[1],
-                granularity
-        );
+        // 上年同月（同比）
+        LocalDate lastYearSameMonth = startDate.minusYears(1);
+        LocalDate[] prevPeriod = getNaturalMonth(lastYearSameMonth);
 
-        // ④ 上期 KPI
         KpiData previous = orderMapper.getKpi(
                 prevPeriod[0],
                 prevPeriod[1],
                 restaurantId
         );
 
-        // ⑤ 返回
         KpiCompareDTO dto = new KpiCompareDTO();
         dto.setCurrent(current);
         dto.setPrevious(previous);
