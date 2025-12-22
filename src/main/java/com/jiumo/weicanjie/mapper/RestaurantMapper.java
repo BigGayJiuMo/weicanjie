@@ -5,6 +5,7 @@ import com.jiumo.weicanjie.entity.Restaurant;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -83,4 +84,16 @@ public interface RestaurantMapper extends BaseMapper<Restaurant> {
      * @return 返回匹配的餐厅ID和名称列表（最多8个结果）
      */
     List<Restaurant> suggestRestaurant(@Param("keyword") String keyword);
+
+    @Update({
+            "<script>",
+            "UPDATE restaurant",
+            "SET monthly_sales = #{sales}",
+            "WHERE id = #{restaurantId}",
+            "</script>"
+    })
+    void updateMonthlySales(
+            @Param("restaurantId") Long restaurantId,
+            @Param("sales") Integer sales
+    );
 }

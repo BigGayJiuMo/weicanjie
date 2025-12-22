@@ -110,4 +110,9 @@ public interface OrderMapper extends BaseMapper<Order> {
             @Param("endDate") LocalDate endDate,
             @Param("restaurantId") Long restaurantId
     );
+
+    List<Map<String, Object>> statRestaurantMonthlySales(
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
 }

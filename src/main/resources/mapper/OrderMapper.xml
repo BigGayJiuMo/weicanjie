@@ -119,4 +119,13 @@
         </if>
     </select>
 
+    <select id="statRestaurantMonthlySales" resultType="map">
+        SELECT
+            restaurant_id AS restaurantId,
+            COUNT(*) AS monthlySales
+        FROM orders
+        WHERE status = 6
+          AND DATE(created_time) BETWEEN #{start} AND #{end}
+        GROUP BY restaurant_id
+    </select>
 </mapper>
