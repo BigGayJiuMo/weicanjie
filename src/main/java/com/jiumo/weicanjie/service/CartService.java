@@ -73,24 +73,6 @@ public interface CartService extends IService<Cart> {
     Result<String> removeRestaurantCart(Long userId, Long restaurantId);
 
     /**
-     * 获取指定用户在指定餐厅的购物车映射（每个菜品及其数量）
-     * @param userId 用户ID
-     * @param restaurantId 餐厅ID
-     * @return 返回指定餐厅的购物车项映射，键为菜品ID，值为数量
-     */
-    Result<Map<Long, Integer>> getUserCart(Long userId, Long restaurantId);
-
-    /**
-     * 更新购物车中某个菜品的数量
-     * @param userId 用户ID
-     * @param restaurantId 餐厅ID
-     * @param dishId 菜品ID
-     * @param quantity 新的数量
-     * @return 返回操作结果（成功或失败）
-     */
-    Result<String> updateCartItem(Long userId, Long restaurantId, Long dishId, Integer quantity);
-
-    /**
      * 获取用户购物车中的每个菜品及其数量的映射
      * @param userId 用户ID
      * @param restaurantId 餐厅ID

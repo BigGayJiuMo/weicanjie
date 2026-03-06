@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.entity.Cart;
+import com.jiumo.weicanjie.entity.Dish;
 import com.jiumo.weicanjie.mapper.CartMapper;
 import com.jiumo.weicanjie.service.CartService;
+import com.jiumo.weicanjie.service.DishService;
 import com.jiumo.weicanjie.service.RestaurantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +29,8 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
 
     @Autowired
     private CartMapper cartMapper;
-
+    @Autowired
+    private DishService dishService;
     @Autowired
     private RestaurantService restaurantService;
     /**
@@ -156,17 +160,38 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
     @Transactional
     public Result<String> updateCartQuantity(Long userId, Long restaurantId, Long dishId, Integer quantity) {
         try {
-            Cart cart = cartMapper.selectByUserAndDish(userId, restaurantId, dishId); // 根据用户、餐厅和菜品查询购物车项
+            Cart cart = cartMapper.selectByUserAndDish(userId, restaurantId, dishId);
+
+            // 如果购物车没有这个菜
             if (cart == null) {
-                return Result.error("购物车商品不存在");
+                if (quantity <= 0) {
+                    return Result.success("无需操作");
+                }
+
+                // 查询菜品价格
+                Result<Dish> dishResult = dishService.getById(dishId);
+                if (dishResult.getCode() != 200 || dishResult.getData() == null) {
+                    return Result.error("菜品不存在");
+                }
+                BigDecimal price = dishResult.getData().getPrice();
+
+                Cart newCart = new Cart();
+                newCart.setUserId(userId);
+                newCart.setRestaurantId(restaurantId);
+                newCart.setDishId(dishId);
+                newCart.setQuantity(quantity);
+                newCart.setPrice(price);  // ⭐ 设置价格
+
+                cartMapper.insert(newCart);
+                return Result.success("添加成功");
             }
 
+            // 已存在
             if (quantity <= 0) {
-                // 如果数量为0或负数，移除商品
                 cartMapper.deleteById(cart.getId());
             } else {
-                // 更新菜品数量
                 cart.setQuantity(quantity);
+                // 注意：价格不变，无需更新
                 cartMapper.updateById(cart);
             }
 
@@ -249,34 +274,6 @@ public class CartServiceImpl extends ServiceImpl<CartMapper, Cart> implements Ca
         } catch (Exception e) {
             return Result.error("删除购物车失败: " + e.getMessage());
         }
-    }
-
-    /**
-     * 获取用户在指定餐厅的购物车映射（菜品ID -> 数量）
-     *
-     * @param userId 用户ID
-     * @param restaurantId 餐厅ID
-     * @return 用户购物车映射
-     */
-    @Override
-    public Result<Map<Long, Integer>> getUserCart(Long userId, Long restaurantId) {
-        // 直接调用已有的方法
-        return getUserCartMap(userId, restaurantId);
-    }
-
-    /**
-     * 更新购物车项（数量）
-     *
-     * @param userId 用户ID
-     * @param restaurantId 餐厅ID
-     * @param dishId 菜品ID
-     * @param quantity 新的数量
-     * @return 更新结果
-     */
-    @Override
-    public Result<String> updateCartItem(Long userId, Long restaurantId, Long dishId, Integer quantity) {
-        // 直接调用已有的方法
-        return updateCartQuantity(userId, restaurantId, dishId, quantity);
     }
 
     /**

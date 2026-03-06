@@ -109,7 +109,7 @@ public class CartController {
      */
     @PostMapping("/update")
     public Result<String> updateCartItem(@RequestBody CartRequest request) {
-        return cartService.updateCartItem(request.getUserId(), request.getRestaurantId(), request.getDishId(), request.getQuantity());
+        return cartService.updateCartQuantity(request.getUserId(), request.getRestaurantId(), request.getDishId(), request.getQuantity());
     }
 
     /**
