@@ -252,6 +252,33 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         }
     }
 
+    @Override
+    public Result<?> getPageByCategory(Integer categoryId, Integer pageNum, Integer pageSize) {
+        try {
+            Page<Restaurant> page = new Page<>(pageNum, pageSize);
+            QueryWrapper<Restaurant> qw = new QueryWrapper<>();
+
+            // 根据分类ID关联查询（假设餐厅表中直接有 category_id 字段）
+            // 实际情况请根据数据库结构调整查询条件
+            qw.eq("category_type", categoryId);
+
+            // 过滤已下架的餐厅（status != 0）
+            qw.ne("status", 0);
+
+            qw.orderByDesc("id"); // 按ID倒序，可根据需要调整
+
+            Page<Restaurant> result = restaurantMapper.selectPage(page, qw);
+
+            // 加载营业状态
+            result.getRecords().forEach(this::loadAndCalculateBusinessStatus);
+
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("获取分类餐厅分页失败", e);
+            return Result.error("获取分类餐厅失败");
+        }
+    }
+
     /**
      * 根据关键字搜索餐厅
      *

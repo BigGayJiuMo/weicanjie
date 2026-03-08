@@ -67,6 +67,7 @@ public interface RestaurantService extends IService<Restaurant> {
      */
     Result<?> getPage(Integer pageNum, Integer pageSize, String keyword);
 
+    Result<?> getPageByCategory(Integer categoryId, Integer pageNum, Integer pageSize);
     /**
      * 删除指定的餐厅。
      *
