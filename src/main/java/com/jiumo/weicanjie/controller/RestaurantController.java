@@ -59,6 +59,22 @@ public class RestaurantController {
     }
 
     /**
+     * 分页获取餐厅列表（支持关键字搜索）
+     *
+     * @param pageNum  当前页码（默认1）
+     * @param pageSize 每页数量（默认10）
+     * @param keyword  搜索关键字（可选）
+     * @return 分页结果
+     */
+    @GetMapping("/page")
+    public Result<?> getRestaurantPage(
+            @RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize,
+            @RequestParam(value = "keyword", required = false) String keyword) {
+        return restaurantService.getPage(pageNum, pageSize, keyword);
+    }
+
+    /**
      * 获取餐厅详情（包括分类和菜品）
      *
      * 该接口用于获取指定餐厅的详细信息，包括餐厅的分类和菜品等信息。
