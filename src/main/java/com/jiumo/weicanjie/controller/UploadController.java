@@ -56,8 +56,12 @@ public class UploadController {
                     break;
 
                 case "review":
-                    // 评论图片存储路径
-                    folder = "restaurant/" + restaurantId + "/review/";
+                    // 评论图片存储路径，如果未提供餐厅ID，则使用临时目录
+                    if (restaurantId == null) {
+                        folder = "review/temp/";
+                    } else {
+                        folder = "restaurant/" + restaurantId + "/review/";
+                    }
                     break;
 
                 case "logo":

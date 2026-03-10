@@ -32,10 +32,14 @@ public interface ReviewReportMapper extends BaseMapper<ReviewReport> {
             "ur.rating, ",
             "ur.image_urls, ",
             "u.nickname AS username, ",
-            "u.avatar_url AS avatar ",
+            "u.avatar_url AS avatar, ",
+            "reporter.nickname AS reporterName, ",
+            "r.detail AS reporterDetail, ",
+            "CAST(r.images AS CHAR) AS reportImages ",   // 将 JSON 转为字符串
             "FROM review_report r ",
             "LEFT JOIN user_review ur ON r.review_id = ur.id ",
             "LEFT JOIN users u ON ur.user_id = u.id ",
+            "LEFT JOIN users reporter ON r.reporter_id = reporter.id ",
             "WHERE 1=1 ",
 
             "<if test='status != null and status != -1'>",
