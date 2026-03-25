@@ -66,7 +66,7 @@ public class AdminRestaurantController {
         }
 
         // 超级管理员可以正常分页查看所有餐厅
-        return restaurantService.getPage(pageNum, pageSize, keyword);
+        return restaurantService.getAdminPage(pageNum, pageSize, keyword);
     }
 
     /**

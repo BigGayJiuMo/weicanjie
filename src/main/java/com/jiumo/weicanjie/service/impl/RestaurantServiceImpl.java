@@ -269,9 +269,14 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
 
             Page<Restaurant> result = restaurantMapper.selectPage(page, qw);
 
-            // 加载营业状态
+            // 计算营业状态
             result.getRecords().forEach(this::loadAndCalculateBusinessStatus);
 
+            // 用户端：过滤停业 + 排序
+            List<Restaurant> sorted =
+                    sortRestaurants(result.getRecords(), true);
+
+            result.setRecords(sorted);
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取分类餐厅分页失败", e);
@@ -319,6 +324,24 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
         }
     }
 
+    /**
+     * 餐厅排序方法
+     * @param list 原始列表
+     * @param filterClosed 是否过滤停业（true=用户端，false=管理端）
+     */
+    private List<Restaurant> sortRestaurants(
+            List<Restaurant> list,
+            boolean filterClosed
+    ) {
+        return list.stream()
+                // 是否过滤停业
+                .filter(r -> !filterClosed || r.getBusinessStatus() != 0)
+                .sorted((a, b) -> Integer.compare(
+                        a.getBusinessStatus(),
+                        b.getBusinessStatus()
+                ))
+                .collect(Collectors.toList());
+    }
 
     /**
      * 获取餐厅的分页列表，可以根据关键字进行筛选
@@ -343,10 +366,36 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
 
         result.getRecords().forEach(this::loadAndCalculateBusinessStatus);
 
+        // 用户端：过滤停业
+        List<Restaurant> sorted =
+                sortRestaurants(result.getRecords(), true);
+
+        result.setRecords(sorted);
         return Result.success(result);
     }
 
+    @Override
+    public Result<?> getAdminPage(Integer pageNum, Integer pageSize, String keyword) {
+        Page<Restaurant> page = new Page<>(pageNum, pageSize);
+        QueryWrapper<Restaurant> qw = new QueryWrapper<>();
 
+        if (keyword != null && !keyword.isEmpty()) {
+            qw.like("name", keyword);
+        }
+
+        qw.orderByDesc("id");
+
+        Page<Restaurant> result = restaurantMapper.selectPage(page, qw);
+
+        result.getRecords().forEach(this::loadAndCalculateBusinessStatus);
+
+        // 管理端：不过滤停业
+        List<Restaurant> sorted =
+                sortRestaurants(result.getRecords(), false);
+
+        result.setRecords(sorted);
+        return Result.success(result);
+    }
     /**
      * 删除指定的餐厅
      *
