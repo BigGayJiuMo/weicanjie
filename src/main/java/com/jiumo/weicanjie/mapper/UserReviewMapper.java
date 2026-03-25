@@ -62,10 +62,20 @@ public interface UserReviewMapper extends BaseMapper<UserReview> {
      */
     @Select({
             "<script>",
-            "SELECT * FROM user_review WHERE 1=1",
-            " <if test='restaurantId != null'> AND restaurant_id = #{restaurantId} </if>",
-            " <if test='reviewStatus != -1'> AND review_status = #{reviewStatus} </if>",
-            " ORDER BY created_time DESC",
+            "SELECT",
+            " r.*,",
+            " u.nickname AS username,",
+            " u.avatar_url AS avatar",
+            "FROM user_review r",
+            "LEFT JOIN users u ON r.user_id = u.id",
+            "WHERE 1=1",
+            " <if test='restaurantId != null'>",
+            "   AND r.restaurant_id = #{restaurantId}",
+            " </if>",
+            " <if test='reviewStatus != -1'>",
+            "   AND r.review_status = #{reviewStatus}",
+            " </if>",
+            "ORDER BY r.created_time DESC",
             "</script>"
     })
     List<Map<String, Object>> adminSelectReviewsFlexible(
