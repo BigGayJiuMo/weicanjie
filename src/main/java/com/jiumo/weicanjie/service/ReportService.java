@@ -1,5 +1,6 @@
 package com.jiumo.weicanjie.service;
 
+import com.jiumo.weicanjie.dto.DishSalesDTO;
 import com.jiumo.weicanjie.dto.KpiCompareDTO;
 
 import java.time.LocalDate;
@@ -31,5 +32,11 @@ public interface ReportService {
             LocalDate endDate,
             Long restaurantId,
             String granularity
+    );
+
+    List<DishSalesDTO> getDishSales(
+            LocalDate startDate,
+            LocalDate endDate,
+            Long restaurantId
     );
 }

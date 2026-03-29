@@ -1,6 +1,7 @@
 package com.jiumo.weicanjie.controller.admin;
 
 import com.jiumo.weicanjie.common.Result;
+import com.jiumo.weicanjie.dto.DishSalesDTO;
 import com.jiumo.weicanjie.dto.KpiCompareDTO;
 import com.jiumo.weicanjie.dto.ReportResponseDTO;
 import com.jiumo.weicanjie.service.ReportService;
@@ -67,9 +68,16 @@ public class AdminReportController {
                 granularity
         );
 
+        List<DishSalesDTO> dishSales = reportService.getDishSales(
+                startDate,
+                endDate,
+                restaurantId
+        );
+
         ReportResponseDTO resp = new ReportResponseDTO();
         resp.setData(reportData);
         resp.setKpi(kpiCompare);
+        resp.setDishSales(dishSales);
 
         return Result.ok(resp);
     }

@@ -1,6 +1,7 @@
 package com.jiumo.weicanjie.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.jiumo.weicanjie.dto.DishSalesDTO;
 import com.jiumo.weicanjie.dto.KpiData;
 import com.jiumo.weicanjie.dto.ReportData;
 import com.jiumo.weicanjie.entity.Order;
@@ -114,5 +115,11 @@ public interface OrderMapper extends BaseMapper<Order> {
     List<Map<String, Object>> statRestaurantMonthlySales(
             @Param("start") LocalDate start,
             @Param("end") LocalDate end
+    );
+
+    List<DishSalesDTO> getDishSalesStat(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("restaurantId") Long restaurantId
     );
 }

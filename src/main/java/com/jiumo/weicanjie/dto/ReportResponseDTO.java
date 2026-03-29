@@ -7,4 +7,5 @@ import java.util.List;
 public class ReportResponseDTO {
     private List<?> data;
     private KpiCompareDTO kpi;
+    private List<DishSalesDTO> dishSales;
 }
