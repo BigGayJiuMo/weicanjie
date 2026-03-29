@@ -143,17 +143,23 @@
         JOIN order_items oi ON o.id = oi.order_id
         JOIN dish d ON oi.dish_id = d.id
         JOIN restaurant r ON o.restaurant_id = r.id
-        WHERE o.status = 6
-        <if test="startDate != null">
-            AND DATE(o.pay_time) &gt;= #{startDate}
-        </if>
-        <if test="endDate != null">
-            AND DATE(o.pay_time) &lt;= #{endDate}
-        </if>
-        <if test="restaurantId != null">
-            AND o.restaurant_id = #{restaurantId}
-        </if>
-        GROUP BY d.id, d.name, r.name
-        ORDER BY totalSold DESC
+        <where>
+            o.status = 6
+            <if test="startDate != null">
+                AND DATE(o.pay_time) &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND DATE(o.pay_time) &lt;= #{endDate}
+            </if>
+            <if test="restaurantId != null">
+                AND o.restaurant_id = #{restaurantId}
+            </if>
+        </where>
+        GROUP BY
+        d.id,
+        d.name,
+        r.name
+        ORDER BY
+        totalSold DESC
     </select>
 </mapper>
