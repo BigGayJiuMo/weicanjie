@@ -374,6 +374,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 map.put("statusText", getStatusText(order.getStatus()));
                 map.put("totalAmount", order.getTotalAmount());
                 map.put("totalQuantity", totalQuantity);
+                map.put("orderNumber", order.getOrderNumber());
                 map.put("createdTime", order.getCreatedTime());
                 map.put("items", items);
 

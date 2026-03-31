@@ -6,24 +6,27 @@
     <!-- 搜索订单：根据用户ID和关键词搜索订单 -->
     <select id="searchOrders" resultType="java.util.Map">
         SELECT
-            o.id AS orderId,
-            o.restaurant_id AS restaurantId,
-            r.name AS restaurantName,
-            r.logo_url AS restaurantLogo,
-            o.total_amount AS totalAmount,
-            o.status AS status,
-            o.created_time AS createdTime
+        o.id AS orderId,
+        o.restaurant_id AS restaurantId,
+        r.name AS restaurantName,
+        r.logo_url AS restaurantLogo,
+        o.total_amount AS totalAmount,
+        o.status AS status,
+        o.created_time AS createdTime,
+        o.order_number AS orderNumber
         FROM orders o
-                 JOIN restaurant r ON o.restaurant_id = r.id
+        JOIN restaurant r ON o.restaurant_id = r.id
         WHERE o.user_id = #{userId}
-          AND (
-            r.name LIKE CONCAT('%', #{keyword}, '%')
-                OR EXISTS (
-                SELECT 1 FROM order_items oi
-                WHERE oi.order_id = o.id
-                  AND oi.dish_name LIKE CONCAT('%', #{keyword}, '%')
-            )
-            )
+        AND (
+        r.name LIKE CONCAT('%', #{keyword}, '%')
+        OR EXISTS (
+        SELECT 1 FROM order_items oi
+        WHERE oi.order_id = o.id
+        AND oi.dish_name LIKE CONCAT('%', #{keyword}, '%')
+        )
+        OR o.order_number LIKE CONCAT('%', #{keyword}, '%')
+        OR o.order_number = #{keyword}
+        )
         ORDER BY o.created_time DESC
     </select>
 
