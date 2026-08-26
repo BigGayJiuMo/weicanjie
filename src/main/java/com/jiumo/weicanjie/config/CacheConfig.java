@@ -1,7 +1,9 @@
 package com.jiumo.weicanjie.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -19,16 +21,16 @@ import java.time.Duration;
  * Redis 缓存配置（Spring Cache 抽象）
  * <p>
  * - key 使用 String 序列化（可读性好，便于排查）
- * - value 使用 GenericJackson2JsonRedisSerializer（JSON 存储，携带类型信息，避免 JDK 序列化乱码）
+ * - value 使用 JSON 存储（携带 {@code @class} 类型标记，反序列化才能还原为目标类型）
  * - 默认 TTL 5 分钟
  * <p>
- * 注意：GenericJackson2JsonRedisSerializer 默认的 ObjectMapper 不支持 Java 8 时间类型
- * （LocalDateTime 等），必须手动注册 JavaTimeModule，否则缓存写入会 SerializationException
- * （Spring 只记日志不报错，导致缓存静默失效——压测"带缓存"和"无缓存"几乎一样慢就是这个原因）。
- * <p>
- * 面试点：
- * 1. 为什么用 JSON 不用 JDK 序列化？—— JDK 序列化可读性差、体积大、且要求类实现 Serializable；
- * 2. 缓存一致性策略：先更新数据库，再删除缓存（Cache Aside 模式），读时 miss 则回源 DB 并回填。
+ * 注意（重要坑）：
+ * 1. {@code GenericJackson2JsonRedisSerializer(ObjectMapper)} 传自定义 ObjectMapper 的构造
+ *    方法【不会】自动启用 Jackson 类型标记，序列化结果没有 {@code @class}，读取时只能反序列化成
+ *    {@code LinkedHashMap}，Spring Cache 强转方法返回类型（如 Result）会抛 ClassCastException！
+ *    所以这里必须手动调用 {@code activateDefaultTyping(...)}。
+ * 2. Java 8 时间类型（LocalDateTime）必须注册 JavaTimeModule，否则序列化抛异常，
+ *    且 Spring Cache 对 put 异常只记日志不中断 → 缓存静默失效。
  */
 @Configuration
 @EnableCaching
@@ -36,10 +38,15 @@ public class CacheConfig {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
-        // 支持 LocalDateTime 的 ObjectMapper（注册 JavaTimeModule）
+        // 带 JavaTimeModule 且启用类型标记的 ObjectMapper
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // 关键：显式启用默认类型（写 @class），否则反序列化只能得到 LinkedHashMap
+        objectMapper.activateDefaultTyping(
+                LaissezFaireSubTypeValidator.instance,
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY);
         GenericJackson2JsonRedisSerializer valueSerializer =
                 new GenericJackson2JsonRedisSerializer(objectMapper);
 
@@ -47,7 +54,7 @@ public class CacheConfig {
                 // key: 字符串
                 .serializeKeysWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
-                // value: JSON（携带 @class 类型信息，反序列化不丢类型；支持 LocalDateTime）
+                // value: JSON（携带 @class 类型信息，还原目标类型）
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(valueSerializer))
                 // 默认过期时间 5 分钟

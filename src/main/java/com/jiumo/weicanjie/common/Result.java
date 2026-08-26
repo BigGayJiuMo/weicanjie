@@ -1,5 +1,6 @@
 package com.jiumo.weicanjie.common;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import java.io.Serializable;
 
@@ -179,10 +180,15 @@ public class Result<T> implements Serializable {
     }
 
     // 判断结果是否成功
+    // 注意：getter 若参与 JSON 序列化会多出 error/success 字段，导致缓存反序列化失败。
+    // 压测时遇到过：Result 被缓存成 JSON 后读回时因未知字段 error 抛 UnrecognizedPropertyException，
+    // 因此这些"逻辑判断"方法必须用 @JsonIgnore 排除。
+    @JsonIgnore
     public boolean isSuccess() {
         return code != null && code == 200;
     }
 
+    @JsonIgnore
     public boolean isError() {
         return code == null || code != 200;
     }
