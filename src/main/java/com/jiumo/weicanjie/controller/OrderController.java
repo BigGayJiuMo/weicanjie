@@ -1,13 +1,17 @@
 package com.jiumo.weicanjie.controller;
 
 import com.jiumo.weicanjie.common.Result;
-import com.jiumo.weicanjie.entity.Order;
+import com.jiumo.weicanjie.dto.BatchOrderRequest;
 import com.jiumo.weicanjie.dto.OrderRequest;
+import com.jiumo.weicanjie.dto.RefundApplyRequest;
+import com.jiumo.weicanjie.entity.Order;
 import com.jiumo.weicanjie.service.OrderService;
-import lombok.Data;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +19,7 @@ import java.util.Map;
  * 订单管理控制器
  * 该控制器提供订单的创建、查询、支付、取消等功能。
  */
+@Tag(name = "用户端-订单", description = "下单、支付、取消、退款、搜索等接口")
 @RestController
 @RequestMapping("/order")
 public class OrderController {
@@ -30,8 +35,9 @@ public class OrderController {
      * @param request 订单请求对象，包含订单和订单项的信息
      * @return 返回创建的订单信息
      */
+    @Operation(summary = "创建单个订单", description = "包含订单基本信息与订单项（菜品）列表")
     @PostMapping("/create")
-    public Result<Order> createOrder(@RequestBody OrderRequest request) {
+    public Result<Order> createOrder(@RequestBody @Valid OrderRequest request) {
         return orderService.createOrder(request.getOrder(), request.getItems());
     }
 
@@ -43,8 +49,9 @@ public class OrderController {
      * @param request 批量订单请求对象，包含多个餐厅的订单信息
      * @return 返回批量创建的订单列表
      */
+    @Operation(summary = "批量创建订单", description = "同时为多个餐厅创建订单")
     @PostMapping("/create/batch")
-    public Result<List<Order>> createBatchOrders(@RequestBody BatchOrderRequest request) {
+    public Result<List<Order>> createBatchOrders(@RequestBody @Valid BatchOrderRequest request) {
         return orderService.createBatchOrders(request.getRestaurants());
     }
 
@@ -206,23 +213,5 @@ public class OrderController {
     @PostMapping("/confirmPickup/{orderId}")
     public Result<String> confirmPickup(@PathVariable Long orderId) {
         return orderService.confirmPickup(orderId);
-    }
-
-    @Data
-    public static class RefundApplyRequest {
-        private Long orderId;  // 订单ID
-        private String reason; // 退款原因
-        private String remark; // 退款备注
-    }
-
-    @Data
-    public static class BatchOrderRequest {
-        private List<SingleOrderRequest> restaurants; // 批量订单请求，包含多个餐厅的订单
-
-        @Data
-        public static class SingleOrderRequest {
-            private OrderRequest.OrderDTO order; // 订单对象
-            private List<OrderRequest.OrderItemRequest> items; // 订单项列表
-        }
     }
 }

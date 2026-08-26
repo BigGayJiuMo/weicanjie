@@ -1,16 +1,17 @@
 package com.jiumo.weicanjie.controller;
 
 import com.jiumo.weicanjie.common.Result;
+import com.jiumo.weicanjie.dto.CartRequest;
 import com.jiumo.weicanjie.entity.Cart;
 import com.jiumo.weicanjie.entity.Dish;
 import com.jiumo.weicanjie.entity.Restaurant;
 import com.jiumo.weicanjie.service.CartService;
 import com.jiumo.weicanjie.service.DishService;
 import com.jiumo.weicanjie.service.RestaurantService;
-import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -108,7 +109,7 @@ public class CartController {
      * @return 操作结果
      */
     @PostMapping("/update")
-    public Result<String> updateCartItem(@RequestBody CartRequest request) {
+    public Result<String> updateCartItem(@RequestBody @Valid CartRequest request) {
         return cartService.updateCartQuantity(request.getUserId(), request.getRestaurantId(), request.getDishId(), request.getQuantity());
     }
 
@@ -118,7 +119,7 @@ public class CartController {
      * @return 操作结果
      */
     @PostMapping("/remove")
-    public Result<String> removeCartItem(@RequestBody CartRequest request) {
+    public Result<String> removeCartItem(@RequestBody @Valid CartRequest request) {
         return cartService.removeFromCart(request.getUserId(), request.getRestaurantId(), request.getDishId());
     }
 
@@ -128,7 +129,7 @@ public class CartController {
      * @return 操作结果
      */
     @PostMapping("/clear")
-    public Result<String> clearCart(@RequestBody CartRequest request) {
+    public Result<String> clearCart(@RequestBody @Valid CartRequest request) {
         return cartService.clearUserCart(request.getUserId(), request.getRestaurantId());
     }
 
@@ -138,20 +139,7 @@ public class CartController {
      * @return 操作结果
      */
     @PostMapping("/restaurant/remove")
-    public Result<String> removeRestaurantCart(@RequestBody CartRequest request) {
+    public Result<String> removeRestaurantCart(@RequestBody @Valid CartRequest request) {
         return cartService.removeRestaurantCart(request.getUserId(), request.getRestaurantId());
-    }
-
-    /**
-     * 请求参数类，用于包含购物车操作所需的参数
-     */
-    @Data
-    public static class CartRequest {
-        private Long userId; // 用户ID
-        private Long restaurantId; // 餐厅ID
-        private Long dishId; // 菜品ID
-        private Integer quantity; // 商品数量
-        private java.math.BigDecimal price; // 商品价格
-        private String notes; // 商品备注
     }
 }

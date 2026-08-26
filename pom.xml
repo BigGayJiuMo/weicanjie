@@ -56,6 +56,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- 参数校验 (javax.validation, Spring Boot 2.7) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -95,6 +101,13 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
+        <!-- Knife4j + springdoc-openapi: API 文档 (Spring Boot 2.x 用 javax 版) -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-spring-boot-starter</artifactId>
+            <version>4.4.0</version>
         </dependency>
     </dependencies>
 </project>

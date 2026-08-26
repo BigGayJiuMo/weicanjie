@@ -3,7 +3,7 @@ package com.jiumo.weicanjie.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.jiumo.weicanjie.controller.OrderController;
+import com.jiumo.weicanjie.dto.BatchOrderRequest;
 import com.jiumo.weicanjie.dto.OrderRequest;
 import com.jiumo.weicanjie.entity.*;
 import com.jiumo.weicanjie.mapper.OrderItemMapper;
@@ -139,12 +139,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      */
     @Override
     @Transactional
-    public Result<List<Order>> createBatchOrders(List<OrderController.BatchOrderRequest.SingleOrderRequest> list) {
+    public Result<List<Order>> createBatchOrders(List<BatchOrderRequest.SingleOrderRequest> list) {
         try {
             List<Order> orders = new ArrayList<>();
 
             // 为每个订单请求创建订单
-            for (OrderController.BatchOrderRequest.SingleOrderRequest req : list) {
+            for (BatchOrderRequest.SingleOrderRequest req : list) {
                 OrderRequest.OrderDTO orderDTO = req.getOrder();
                 List<OrderRequest.OrderItemRequest> items = req.getItems();
 

@@ -76,13 +76,14 @@ public interface OrderMapper extends BaseMapper<Order> {
     List<Order> selectOverdueUnpaidOrders(LocalDateTime expireTime);
 
     /**
-     * 搜索订单，根据用户ID和关键词，支持按餐厅名称或菜品名称搜索。
+     * 搜索订单，根据用户ID和关键词，支持按餐厅名称、菜品名称或订单号搜索。
+     * SQL 实现见 OrderMapper.xml 中 id="searchOrders"（接口上不加 @Select，
+     * 否则会覆盖 XML 里的实现，导致 keyword 过滤失效）。
      *
      * @param userId  用户ID
      * @param keyword 搜索关键词（餐厅名称或菜品名称）
      * @return 返回符合条件的订单列表
      */
-    @Select("SELECT * FROM orders WHERE user_id = #{userId} ORDER BY created_time DESC")
     List<Map<String, Object>> searchOrders(
             @Param("userId") Long userId,
             @Param("keyword") String keyword

@@ -10,6 +10,8 @@ import com.jiumo.weicanjie.service.RestaurantBusinessHoursService;
 import com.jiumo.weicanjie.service.RestaurantService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -49,10 +51,12 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
 
     /**
      * 获取所有营业中的餐厅列表
+     * 热点接口：结果缓存 5 分钟；unless 排除错误结果（不缓存失败返回）
      *
      * @return 返回营业中的餐厅列表
      */
     @Override
+    @Cacheable(cacheNames = "restaurant", key = "'active'", unless = "#result == null || #result.code != 200")
     public Result<List<Restaurant>> getActiveRestaurants() {
         try {
             List<Restaurant> restaurants = restaurantMapper.selectActiveRestaurants();
@@ -68,11 +72,13 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
 
     /**
      * 获取餐厅的详细信息，包括营业时间、菜品分类及菜品、餐厅图片等
+     * 热点接口：按餐厅ID缓存 5 分钟
      *
      * @param id 餐厅ID
      * @return 返回餐厅详情
      */
     @Override
+    @Cacheable(cacheNames = "restaurantDetail", key = "#id", unless = "#result == null || #result.code != 200")
     public Result<Restaurant> getRestaurantDetail(Long id) {
         try {
             Restaurant restaurant = restaurantMapper.selectById(id);
@@ -214,10 +220,12 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
 
     /**
      * 获取所有餐厅的列表
+     * 热点接口：结果缓存 5 分钟
      *
      * @return 返回所有餐厅的列表
      */
     @Override
+    @Cacheable(cacheNames = "restaurant", key = "'all'", unless = "#result == null || #result.code != 200")
     public Result<List<Restaurant>> getAllRestaurants() {
         try {
             List<Restaurant> restaurants = restaurantMapper.selectAllRestaurants();
@@ -345,6 +353,7 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
 
     /**
      * 获取餐厅的分页列表，可以根据关键字进行筛选
+     * 热点接口：按分页参数缓存 5 分钟
      *
      * @param pageNum 当前页码
      * @param pageSize 每页的餐厅数量
@@ -352,6 +361,7 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
      * @return 返回分页后的餐厅列表
      */
     @Override
+    @Cacheable(cacheNames = "restaurantPage", key = "#pageNum + '-' + #pageSize + '-' + #keyword", unless = "#result == null || #result.code != 200")
     public Result<?> getPage(Integer pageNum, Integer pageSize, String keyword) {
         Page<Restaurant> page = new Page<>(pageNum, pageSize);
         QueryWrapper<Restaurant> qw = new QueryWrapper<>();
@@ -398,12 +408,14 @@ public class RestaurantServiceImpl extends ServiceImpl<RestaurantMapper, Restaur
     }
     /**
      * 删除指定的餐厅
+     * 删除成功后清除餐厅相关缓存（Cache Aside：先改 DB，再删缓存）
      *
      * @param id 餐厅ID
      * @return 删除结果
      */
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"restaurant", "restaurantDetail", "restaurantPage"}, allEntries = true)
     public Result<?> deleteRestaurant(Long id) {
         try {
             // 0. 删除餐厅相关的所有评价

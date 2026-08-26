@@ -2,10 +2,10 @@ package com.jiumo.weicanjie.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.jiumo.weicanjie.controller.OrderController;
-import com.jiumo.weicanjie.entity.Order;
 import com.jiumo.weicanjie.common.Result;
+import com.jiumo.weicanjie.dto.BatchOrderRequest;
 import com.jiumo.weicanjie.dto.OrderRequest;
+import com.jiumo.weicanjie.entity.Order;
 
 import java.util.List;
 import java.util.Map;
@@ -39,7 +39,7 @@ public interface OrderService extends IService<Order> {
      * @param orderRequests 包含多个订单请求的列表
      * @return 返回创建的订单列表
      */
-    Result<List<Order>> createBatchOrders(List<OrderController.BatchOrderRequest.SingleOrderRequest> orderRequests);
+    Result<List<Order>> createBatchOrders(List<BatchOrderRequest.SingleOrderRequest> orderRequests);
 
     /**
      * 获取用户的所有订单。
