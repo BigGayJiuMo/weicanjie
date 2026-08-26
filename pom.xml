@@ -14,7 +14,8 @@
     <version>1.0.0</version>
 
     <properties>
-        <java.version>8</java.version>
+        <!-- 与项目 SDK(JDK 17)保持一致;Spring Boot 2.7.5 官方支持 Java 8-19 -->
+        <java.version>17</java.version>
     </properties>
 
     <dependencies>

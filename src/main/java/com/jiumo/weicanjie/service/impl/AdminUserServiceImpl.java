@@ -6,7 +6,6 @@ import com.jiumo.weicanjie.entity.AdminUser;
 import com.jiumo.weicanjie.mapper.AdminUserMapper;
 import com.jiumo.weicanjie.service.AdminUserService;
 import com.jiumo.weicanjie.util.JwtUtil;
-import lombok.var;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
