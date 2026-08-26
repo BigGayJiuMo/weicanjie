@@ -1,5 +1,6 @@
 package com.jiumo.weicanjie.controller;
 
+import com.jiumo.weicanjie.annotation.Idempotent;
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.dto.BatchOrderRequest;
 import com.jiumo.weicanjie.dto.OrderRequest;
@@ -35,8 +36,9 @@ public class OrderController {
      * @param request 订单请求对象，包含订单和订单项的信息
      * @return 返回创建的订单信息
      */
-    @Operation(summary = "创建单个订单", description = "包含订单基本信息与订单项（菜品）列表")
+    @Operation(summary = "创建单个订单", description = "包含订单基本信息与订单项（菜品）列表；需携带请求头 X-Idempotent-Key 防重复下单")
     @PostMapping("/create")
+    @Idempotent(prefix = "order_create", expireSeconds = 600)
     public Result<Order> createOrder(@RequestBody @Valid OrderRequest request) {
         return orderService.createOrder(request.getOrder(), request.getItems());
     }
@@ -49,8 +51,9 @@ public class OrderController {
      * @param request 批量订单请求对象，包含多个餐厅的订单信息
      * @return 返回批量创建的订单列表
      */
-    @Operation(summary = "批量创建订单", description = "同时为多个餐厅创建订单")
+    @Operation(summary = "批量创建订单", description = "同时为多个餐厅创建订单；需携带请求头 X-Idempotent-Key 防重复下单")
     @PostMapping("/create/batch")
+    @Idempotent(prefix = "order_create_batch", expireSeconds = 600)
     public Result<List<Order>> createBatchOrders(@RequestBody @Valid BatchOrderRequest request) {
         return orderService.createBatchOrders(request.getRestaurants());
     }
@@ -102,7 +105,9 @@ public class OrderController {
      * @param orderId 订单ID
      * @return 返回支付操作的结果
      */
+    @Operation(summary = "模拟微信支付", description = "需携带请求头 X-Idempotent-Key 防重复支付")
     @PostMapping("/pay/{orderId}")
+    @Idempotent(prefix = "order_pay", expireSeconds = 600)
     public Result<String> simulateWechatPay(@PathVariable Long orderId) {
         return orderService.simulateWechatPay(orderId);
     }
@@ -183,7 +188,9 @@ public class OrderController {
      * @param req 退款申请请求对象，包含订单ID、退款原因和备注
      * @return 返回退款申请的处理结果
      */
+    @Operation(summary = "用户申请退款", description = "需携带请求头 X-Idempotent-Key 防重复申请退款")
     @PostMapping("/refund/apply")
+    @Idempotent(prefix = "order_refund", expireSeconds = 600)
     public Result<String> applyRefund(@RequestBody RefundApplyRequest req) {
         return orderService.requestRefund(req.getOrderId(), req.getReason(), req.getRemark());
     }

@@ -39,6 +39,23 @@ public class Result<T> implements Serializable {
         return result;
     }
 
+    /**
+     * 接口幂等冲突：请求携带的幂等 key 已使用过，重复请求直接返回该结果。
+     * <p>
+     * code 固定用 409（业务冲突）：
+     * - 前端（管理端 request.js / 小程序 request.js）统一按 code != 200 走错误提示，
+     *   看到 409 会提示"重复提交"，但不会误判为系统 500。
+     * - 关键：第一个请求的成功结果在 Redis 里默认缓存 10 分钟，此后相同幂等 key 的
+     *   重复请求返回的幂等响应里 code=200 但 message 为"重复提交"，与这里 409 的场景区分：
+     *   409 只在"并发的第二个请求还没等第一个完成"时出现。
+     */
+    public static <T> Result<T> idempotentConflict() {
+        Result<T> result = new Result<>();
+        result.setCode(409);
+        result.setMessage("重复请求，请勿重复提交");
+        return result;
+    }
+
     public static <T> Result<T> error(String message) {
         Result<T> result = new Result<>();
         result.setCode(500);
