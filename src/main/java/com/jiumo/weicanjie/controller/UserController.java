@@ -3,6 +3,7 @@ package com.jiumo.weicanjie.controller;
 import com.jiumo.weicanjie.common.Result;
 import com.jiumo.weicanjie.dto.BindPhoneRequest;
 import com.jiumo.weicanjie.dto.LoginRequest;
+import com.jiumo.weicanjie.dto.PhoneLoginRequest;
 import com.jiumo.weicanjie.entity.User;
 import com.jiumo.weicanjie.entity.UserStats;
 import com.jiumo.weicanjie.service.UserService;
@@ -14,8 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 import java.util.HashMap;
 
 /**
@@ -151,13 +150,6 @@ public class UserController {
     public static class BindWeChatRequest {
         private Long userId;  // 用户ID
         private String openid;  // 微信openid
-    }
-
-    @Data
-    public static class PhoneLoginRequest {
-        @NotBlank(message = "手机号不能为空")
-        @Pattern(regexp = "^1\\d{10}$", message = "手机号格式不正确")
-        private String phone;  // 手机号
     }
 
     @Data

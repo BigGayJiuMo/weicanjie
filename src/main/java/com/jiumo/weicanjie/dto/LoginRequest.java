@@ -14,9 +14,8 @@ public class LoginRequest {
     @NotBlank(message = "验证码不能为空")
     private String code;        // 登录验证码
 
-    @NotBlank(message = "手机号不能为空")
-    @Pattern(regexp = "^1\\d{10}$", message = "手机号格式不正确")
-    private String phone;       // 用户的手机号码
+    // 微信登录不要求手机号(手机号登录走 PhoneLoginRequest 单独校验)
+    private String phone;       // 用户的手机号码(选填,仅手机号登录场景使用)
 
     private UserInfo userInfo;  // 用户信息对象，包含昵称和头像
 
