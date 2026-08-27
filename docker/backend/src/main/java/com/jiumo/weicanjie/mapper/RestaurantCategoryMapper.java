@@ -1,0 +1,14 @@
+package com.jiumo.weicanjie.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.jiumo.weicanjie.entity.RestaurantCategory;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * 餐厅分类数据访问接口（Mapper），提供对 restaurant_category 表的操作。
+ * 该接口继承了 MyBatis Plus 提供的 BaseMapper，具有基本的 CRUD 操作功能。
+ */
+@Mapper
+public interface RestaurantCategoryMapper extends BaseMapper<RestaurantCategory> {
+    // 本接口继承了 BaseMapper，因此自动具备了常见的增删改查功能。
+}

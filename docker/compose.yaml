@@ -1,0 +1,126 @@
+# ============================================================
+# 微餐捷 Weicanjie 一键部署(MySQL + Redis + MinIO + 后端 + 管理端)
+# 用法:
+#   docker compose up -d --build
+# 访问:
+#   管理端        http://localhost:8081
+#   后端 API      http://localhost:8080/api
+#   Knife4j 文档  http://localhost:8080/api/doc.html
+#   MinIO 控制台  http://localhost:9001 (minioadmin / minioadmin)
+# 说明:小程序需在微信开发者工具中把 BASE_URL 改为电脑局域网 IP
+#      或部署到服务器后改为服务器地址(见 wechat/utils/config.js)
+# ============================================================
+name: weicanjie
+
+services:
+  # ---------- MySQL 8 ----------
+  mysql:
+    image: mysql:8.0
+    container_name: weicanjie-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: weicanjie_db
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # 首次启动自动执行初始化 SQL(建库建表+种子数据)
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "3306:3306"   # 端口冲突可改 3307:3306;不改则需先停本机 MySQL
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ---------- Redis 7 ----------
+  redis:
+    image: redis:7-alpine
+    container_name: weicanjie-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"   # 端口冲突可改 6380:6379;不改则需先停本机 Redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ---------- MinIO 对象存储 ----------
+  minio:
+    image: minio/minio:latest
+    container_name: weicanjie-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # 控制台
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ---------- 后端 Spring Boot ----------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: weicanjie-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      # 覆盖 application.yml 中的 localhost 为本 compose 内的服务名
+      DB_URL: jdbc:mysql://mysql:3306/weicanjie_db?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+      DB_USERNAME: root
+      DB_PASSWORD: "123456"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/api/doc.html || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ---------- 管理端 nginx ----------
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8081/api   # 浏览器经管理端同源反代访问后端
+    container_name: weicanjie-admin
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
+
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:

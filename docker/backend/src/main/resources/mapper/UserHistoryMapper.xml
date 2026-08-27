@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jiumo.weicanjie.mapper.UserHistoryMapper">
+
+    <!-- 查询用户最近的浏览历史，并关联餐厅信息 -->
+    <select id="selectRecentHistory" resultType="com.jiumo.weicanjie.entity.UserHistory">
+        SELECT
+            h.id,
+            h.user_id AS userId,
+            h.restaurant_id AS restaurantId,
+            h.viewed_time AS viewedTime,
+
+            r.name AS name,
+            r.logo_url AS imageUrl,
+            r.description AS description,
+            r.avg_rating AS avgRating,
+            r.monthly_sales AS monthlySales
+
+        FROM user_history h
+                 LEFT JOIN restaurant r ON h.restaurant_id = r.id
+        WHERE h.user_id = #{userId}
+        ORDER BY h.viewed_time DESC
+            LIMIT #{limit}
+    </select>
+
+</mapper>

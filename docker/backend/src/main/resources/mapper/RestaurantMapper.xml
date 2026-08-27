@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jiumo.weicanjie.mapper.RestaurantMapper">
+
+    <!-- 搜索餐厅：根据用户输入的关键词搜索餐厅名称、描述或菜品名称 -->
+    <select id="searchRestaurant" resultType="com.jiumo.weicanjie.entity.Restaurant">
+        SELECT DISTINCT
+        r.id,
+        r.name,
+        r.description,
+        r.contact_phone,
+        r.logo_url,
+        r.address,
+        r.status,
+        r.category_type,
+        r.avg_rating,
+        r.monthly_sales,
+        r.packing_fee,
+        r.business_status,
+        r.manual_business_status,  <!-- 添加这个字段 -->
+        r.created_time,
+        r.updated_time
+        FROM restaurant r
+        LEFT JOIN dish d ON r.id = d.restaurant_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (
+                r.name LIKE CONCAT('%', #{keyword}, '%')
+                OR r.description LIKE CONCAT('%', #{keyword}, '%')
+                OR d.name LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY r.monthly_sales DESC
+    </select>
+
+    <!-- 实时联想搜索餐厅：根据关键词返回餐厅ID和名称 -->
+    <select id="suggestRestaurant" resultType="com.jiumo.weicanjie.entity.Restaurant">
+        SELECT DISTINCT
+        r.id,
+        r.name,
+        r.description,
+        r.contact_phone,
+        r.logo_url,
+        r.address,
+        r.status,
+        r.category_type,
+        r.avg_rating,
+        r.monthly_sales,
+        r.packing_fee,
+        r.business_status,
+        r.manual_business_status,
+        r.created_time,
+        r.updated_time
+        FROM restaurant r
+        LEFT JOIN dish d ON r.id = d.restaurant_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (
+                r.name LIKE CONCAT('%', #{keyword}, '%')
+                OR d.name LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY r.monthly_sales DESC
+        LIMIT 8
+    </select>
+
+</mapper>
