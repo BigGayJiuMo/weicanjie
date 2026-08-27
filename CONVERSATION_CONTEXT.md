@@ -155,6 +155,7 @@
 | weicanjie-admin | 672959b | 请求封装为写接口自动生成 X-Idempotent-Key 幂等头 |
 | weicanjie-wechat | 316f053 | 登录修复+请求优化 |
 | weicanjie-wechat | 3e04963 | 下单/支付/退款接入幂等 key |
+| weicanjie | 0acdf1c | Docker Compose 一键部署(MySQL+Redis+MinIO+后端+管理端) |
 
 > 注:本文件 `CONVERSATION_CONTEXT.md` 是工作区交接文档,**如不打算入库请勿 `git add -A`**,或先加入 .gitignore。
 
